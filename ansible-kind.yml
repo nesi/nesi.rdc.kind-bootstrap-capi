@@ -1,0 +1,16 @@
+---
+- name: Wait for Nodes
+  hosts: localhost
+  gather_facts: False
+  roles:
+    - { role: infra/wait-for-hosts }
+
+- hosts: servers
+  become_user: root
+  any_errors_fatal: "true"
+  roles:
+    - { role: ansible-kind }
+    - { role: cluster-ctl/cli-install }
+    - { role: cluster-ctl/initialize }
+    - { role: capi-cluster/workload }
+    - { role: capi-cluster/management }

@@ -1,0 +1,2 @@
+---
+clusterctl_repo: "https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterctl_version }}/clusterctl-linux-amd64"

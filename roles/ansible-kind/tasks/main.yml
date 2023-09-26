@@ -1,0 +1,13 @@
+---
+- name: Prechecks
+  include_tasks: precheck.yml
+
+- name: Prerequisites
+  include_tasks: prerequisites.yml
+
+- name: Install kind
+  include_tasks: install.yml
+  when: not kind_status.stat.exists
+
+- name: Create cluster {{ cluster_name }}
+  include_tasks: create-cluster.yml

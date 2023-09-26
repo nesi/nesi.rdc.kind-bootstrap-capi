@@ -1,0 +1,10 @@
+tenant_name = "NeSI_RDC_PROJECT_NAME"
+
+key_pair    = "NeSI_RDC_KEYPAIR_NAME"
+key_file    = "/path/to/flexi/private_key"
+
+kind_flavor_id   = "6b2e76a8-cce0-4175-8160-76e2525d3d3d"
+kind_image_id    = "1a0480d1-55c8-4fd7-8c7a-8c26e52d8cbd" # Ubuntu 22.04
+vm_user     = "ubuntu"
+
+kind_security_groups = ["6443_Allow_ALL", "SSH Allow All", "default"]

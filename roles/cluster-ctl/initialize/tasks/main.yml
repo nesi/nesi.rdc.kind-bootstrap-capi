@@ -1,0 +1,13 @@
+---
+- name: Initialize | Check if clusterctl is running
+  k8s_info:
+    kind: Pod
+    namespace: capi-system
+  register: pod_list
+  become: true
+
+- name: Initialize | Initialize the management cluster
+  shell: >-
+    clusterctl init --infrastructure {{ clusterctl_provider }}
+  become: true
+  when: not (pod_list.resources | length > 0)

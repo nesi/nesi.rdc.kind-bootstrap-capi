@@ -1,0 +1,10 @@
+---
+bin_dir: /usr/local/bin
+
+clusterctl_version: v1.5.1
+clusterctl_provider: openstack
+
+control_nodes: 1
+worker_nodes: 2
+
+clouds_yaml_location: ~/.config/openstack/clouds.yaml

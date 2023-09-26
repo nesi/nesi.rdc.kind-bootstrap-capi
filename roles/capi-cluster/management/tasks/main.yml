@@ -1,0 +1,21 @@
+---
+- name: Management | Check if {{ cluster_name }} is management cluster
+  shell: >-
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig get pods -A | grep -c capo-system
+  register: capo_system_pods
+  become: true
+  ignore_errors: true
+
+- name: Management | Install Openstack management for {{ cluster_name }}
+  shell: >-
+    clusterctl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig init --infrastructure openstack
+  become: true
+  when:
+    - capo_system_pods.stdout != "1"
+
+- name: Management | Move Openstack management from bootstrap to {{ cluster_name }}
+  shell: >-
+    clusterctl move --to-kubeconfig /tmp/{{ cluster_name }}.kubeconfig -v 10
+  become: true
+  when:
+    - capo_system_pods.stdout != "1"
