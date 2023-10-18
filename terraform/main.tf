@@ -42,14 +42,16 @@ resource "null_resource" "services_extra_keys" {
 # Generate ansible hosts
 locals {
   host_ini_all = templatefile("${path.module}/templates/all-hosts.tpl", {
-    kind_floating_ip = openstack_networking_floatingip_v2.kind_floating_ip.address
+    kind_floating_ip = openstack_networking_floatingip_v2.kind_floating_ip.address,
+    vm_private_key_file = var.key_file
   })
 }
 
 # Generate ansible host.ini file
 locals {
   host_ini_content = templatefile("${path.module}/templates/host.ini.tpl", {
-    kind_floating_ip = openstack_networking_floatingip_v2.kind_floating_ip.address
+    kind_floating_ip = openstack_networking_floatingip_v2.kind_floating_ip.address,
+    vm_private_key_file = var.key_file
   })
 }
 

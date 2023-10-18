@@ -4,6 +4,8 @@ This repo contains the ansible scripts to bootstrap a CAPI cluster using kind as
 
 This is based on [Kubernetes Cluster API Provider OpenStack](https://cluster-api-openstack.sigs.k8s.io/) under the getting started link.
 
+You also need to ensure that a CAPI vm image is avaliable, the one used in the NeSI RDC is `ubuntu-2204-kube-v1.26.7`
+
 ## The breakdown
 
 `terraform`
@@ -13,10 +15,16 @@ These are the terraform files used to provision the base kind compute instance t
 Make a copy of `terraform.tfvars.example` and rename it to `terraform.tfvars` and fill in the requried parameters
 
 ```
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+```
+
+Inside the `terraform/terraform.tfvars` file is some user configuration required.
+
+```
 tenant_name = "NeSI_RDC_PROJECT_NAME"
 
 key_pair    = "NeSI_RDC_KEYPAIR_NAME"
-key_file    = "/path/to/nesi_rdc/private_key"
+key_file    = "NeSI_RDC_KEYFILE"
 
 kind_flavor_id   = "6b2e76a8-cce0-4175-8160-76e2525d3d3d" # balanced1.2cpu4ram
 kind_image_id    = "1a0480d1-55c8-4fd7-8c7a-8c26e52d8cbd" # Ubuntu 22.04
@@ -25,7 +33,14 @@ vm_user     = "IMAGE_USER" # Ubuntu is `ubuntu` as an exxample
 kind_security_groups = ["6443_Allow_ALL", "SSH Allow All", "default"]
 ```
 
-`kind_security_groups` need to allow SSH from your ansible host so that the playbooks can run. 
+where
+
+- `NeSI_RDC_KEYPAIR_NAME` is your `Key Pair` name that is setup in NeSI RDC
+- `NeSI_RDC_KEYFILE` is the local location for your ssh key
+
+`kind_security_groups` need to allow SSH from your ansible host so that the playbooks can run. Ensure you have the following ones created or are the same ports:
+- `6443_Allow_ALL` - Allow 6443 to all
+- `SSH Allow All` - Allow 22 to all
 
 `clouds.yaml`
 
@@ -35,9 +50,13 @@ It is recommended that you use `Application Credentials` rather then your own cr
 
 `deployment.sh`
 
-To bootstrap the new CAPI cluster run the command
+To bootstrap the new CAPI cluster run the command ensuring you supply the following variables as envars
+
+`NeSI_RDC_KEYFILE_LOCATION` location to your local keyfile
+`VM_USERNAME` is the username for the kind image
 
 ```
+export TF_VAR_key_file="NeSI_RDC_KEYFILE_LOCATION" export TF_VAR_vm_user="VM_USERNAME"
 ./deployment.sh bootstrap
 ```
 
