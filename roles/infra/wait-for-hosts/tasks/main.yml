@@ -2,7 +2,7 @@
 - name: Wait for nodes to become accessible
   wait_for_connection:
     # Wait for 10 mins for host to become available
-    timeout: 30
+    timeout: 180
   vars:
     ansible_connection: ssh
     ansible_host: "{{ hostvars[item]['ansible_host'] }}"

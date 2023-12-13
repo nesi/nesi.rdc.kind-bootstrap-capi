@@ -47,6 +47,10 @@
 - name: Workload | Init {{ cluster_name }} clusterctl yaml 
   shell: >-
     kubectl apply -f /tmp/{{ cluster_name }}.yml
+  retries: 3
+  delay: 10
+  register: result
+  until: result.rc == 0
   become: true
 
 - name: Workload | Wait for {{ cluster_name }} control plane to return true

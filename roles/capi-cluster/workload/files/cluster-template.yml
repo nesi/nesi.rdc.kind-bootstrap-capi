@@ -21,7 +21,7 @@ spec:
           kubeletExtraArgs:
             cloud-provider: external
             provider-id: openstack:///'{{ instance_id }}'
-          name: '{{ local_hostname }}'
+          name: '{{ local_hostname  }}'
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
@@ -116,7 +116,10 @@ spec:
     kind: Secret
     name: ${CLUSTER_NAME}-cloud-config
   managedSecurityGroups: true
-  nodeCidr: ${CLUSTER_NODE_CIDR}
+  network:
+    name: ${CLUSTER_NETWORK}
+  router: 
+    name: ${CLUSTER_NETWORK}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha7
 kind: OpenStackMachineTemplate
@@ -132,6 +135,9 @@ spec:
         name: ${CLUSTER_NAME}-cloud-config
       image: ${OPENSTACK_IMAGE_NAME}
       sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
+      ports:
+      - network:
+          name: ${CLUSTER_NETWORK}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha7
 kind: OpenStackMachineTemplate
@@ -147,3 +153,6 @@ spec:
         name: ${CLUSTER_NAME}-cloud-config
       image: ${OPENSTACK_IMAGE_NAME}
       sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
+      ports:
+      - network:
+          name: ${CLUSTER_NETWORK}
