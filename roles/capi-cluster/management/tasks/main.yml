@@ -13,13 +13,27 @@
   when:
     - capo_system_pods.stdout != "1"
 
-- name: Workload | Wait for Openstack management to settle
+- name: Management | Wait 2 minutes for Openstack management to settle
   pause:
     seconds: 120
+  when:
+    - capo_system_pods.stdout != "1"
 
 - name: Management | Move Openstack management from bootstrap to {{ cluster_name }}
   shell: >-
     clusterctl move --to-kubeconfig /tmp/{{ cluster_name }}.kubeconfig -v 10
   become: true
+  when:
+    - capo_system_pods.stdout != "1"
+
+- name: Management | Display {{ cluster_name }}.kubeconfig contents
+  command: cat /tmp/{{ cluster_name }}.kubeconfig
+  register: kubeconfig_output
+  when:
+    - capo_system_pods.stdout != "1"
+
+- name: Management | Print {{ cluster_name }}.kubeconfig to console
+  debug:
+    msg: "{{kubeconfig_output.stdout_lines}}"
   when:
     - capo_system_pods.stdout != "1"

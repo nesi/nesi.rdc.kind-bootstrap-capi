@@ -14,13 +14,13 @@ These are the terraform files used to provision the base kind compute instance t
 
 Make a copy of `terraform.tfvars.example` and rename it to `terraform.tfvars` and fill in the requried parameters
 
-```
+``` { .sh }
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 ```
 
 Inside the `terraform/terraform.tfvars` file is some user configuration required.
 
-```
+``` { .sh }
 tenant_name = "NeSI_RDC_PROJECT_NAME"
 
 key_pair    = "NeSI_RDC_KEYPAIR_NAME"
@@ -33,20 +33,98 @@ vm_user     = "IMAGE_USER" # Ubuntu is `ubuntu` as an exxample
 kind_security_groups = ["6443_Allow_ALL", "SSH Allow All", "default"]
 ```
 
-where
+`NeSI_RDC_KEYPAIR_NAME` is your `Key Pair` name that is setup in NeSI RDC
 
-- `NeSI_RDC_KEYPAIR_NAME` is your `Key Pair` name that is setup in NeSI RDC
-- `NeSI_RDC_KEYFILE` is the local location for your ssh key
+`NeSI_RDC_KEYFILE` is the local location for your ssh key
 
 `kind_security_groups` need to allow SSH from your ansible host so that the playbooks can run. Ensure you have the following ones created or are the same ports:
+
 - `6443_Allow_ALL` - Allow 6443 to all
 - `SSH Allow All` - Allow 22 to all
+
+---
+
+`ansible`
+
+Make a copy of `group_vars/servers/servers.yml.example` and rename it to `servers.yml` and fill in the requried parameters
+
+``` { .sh }
+cp group_vars/servers/servers.yml.example group_vars/servers/servers.yml
+```
+
+Inside the `group_vars/servers/servers.yml` file is some user configuration required.
+
+``` { .sh }
+---
+kubernetes_version: v1.28.5
+capi_image_name: rocky-89-kube-v1.28.5
+
+capi_provider_version: v0.8.0
+
+cluster_name: CLUSTER_NAME
+cluster_namespace: default
+
+cluster_network: NeSI_RDC_PROJECT_NAME
+
+openstack_ssh_key: NeSI_RDC_KEYPAIR_NAME
+
+cluster_control_plane_count: 1
+control_plane_flavor: balanced1.2cpu4ram
+
+cluster_worker_count: 2
+worker_flavour: balanced1.2cpu4ram
+
+cluster_node_cidr: 10.30.0.0/24
+
+cluster_pod_cidr: 172.168.0.0/16
+
+bin_dir: /usr/local/bin
+
+clouds_yaml_local_location: ~/.config/openstack/clouds.yaml
+```
+
+`CLUSTER_NAME` the name for your management cluster
+
+`NeSI_RDC_PROJECT_NAME` the name of your NeSI RDC project space
+
+`NeSI_RDC_KEYPAIR_NAME` is your `Key Pair` name that is setup in NeSI RDC
+
+There are the following CAPI images available
+
+``` { .sh }
+Rocky 8.9
+
+rocky-89-kube-v1.22.17
+rocky-89-kube-v1.24.17
+rocky-89-kube-v1.26.12
+rocky-89-kube-v1.27.6
+rocky-89-kube-v1.28.5
+
+
+Ubuntu 22.04
+
+ubuntu-2204-kube-v1.22.17
+ubuntu-2204-kube-v1.23.4
+ubuntu-2204-kube-v1.26.7
+ubuntu-2204-kube-v1.27.6
+ubuntu-2204-kube-v1.28.3
+```
+
+For management clusters we recommend Kuberenetes version 1.27+
+
+If changing the `capi_image_name` within `servers.yml` please also ensure the `kubernetes_version` matches the same.
+
+Example would be using the image `rocky-89-kube-v1.27.6` would mean the `kubernetes_version` would be `v1.27.6`
+
+---
 
 `clouds.yaml`
 
 You will need to ensure you have downloaded the `clouds.yaml` from the NeSI RDC dashboard and placed it in `~/.config/openstack/clouds.yaml`
 
 It is recommended that you use `Application Credentials` rather then your own credentials.
+
+---
 
 `deployment.sh`
 
