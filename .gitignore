@@ -3,3 +3,5 @@ terraform/terraform.tfvars
 terraform/.terraform/*
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
+group_vars/servers/servers.yml
+host.ini
