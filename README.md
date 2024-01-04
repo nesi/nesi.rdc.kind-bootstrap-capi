@@ -55,7 +55,7 @@ To bootstrap the new CAPI cluster run the command ensuring you supply the follow
 `NeSI_RDC_KEYFILE_LOCATION` location to your local keyfile
 `VM_USERNAME` is the username for the kind image
 
-```
+``` { .sh }
 export TF_VAR_key_file="NeSI_RDC_KEYFILE_LOCATION" export TF_VAR_vm_user="VM_USERNAME"
 ./deployment.sh bootstrap
 ```

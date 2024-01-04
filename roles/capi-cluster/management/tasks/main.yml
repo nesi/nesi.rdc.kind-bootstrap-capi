@@ -13,6 +13,10 @@
   when:
     - capo_system_pods.stdout != "1"
 
+- name: Workload | Wait for Openstack management to settle
+  pause:
+    seconds: 120
+
 - name: Management | Move Openstack management from bootstrap to {{ cluster_name }}
   shell: >-
     clusterctl move --to-kubeconfig /tmp/{{ cluster_name }}.kubeconfig -v 10
