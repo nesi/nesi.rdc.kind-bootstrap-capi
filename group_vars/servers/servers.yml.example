@@ -1,6 +1,6 @@
 ---
-kubernetes_version: v1.22.17
-capi_image_name: rocky-89-kube-v1.22.17 #ubuntu-2204-kube-v1.26.7 rocky-89-kube-v1.22.17
+kubernetes_version: v1.28.5
+capi_image_name: rocky-89-kube-v1.28.5 #ubuntu-2204-kube-v1.26.7 rocky-89-kube-v1.28.5
 
 capi_provider_version: v0.8.0
 
