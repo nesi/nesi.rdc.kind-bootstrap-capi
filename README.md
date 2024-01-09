@@ -97,6 +97,7 @@ Rocky 8.9
 rocky-89-kube-v1.22.17
 rocky-89-kube-v1.24.17
 rocky-89-kube-v1.26.12
+rocky-89-kube-v1.25.16
 rocky-89-kube-v1.27.6
 rocky-89-kube-v1.28.5
 
