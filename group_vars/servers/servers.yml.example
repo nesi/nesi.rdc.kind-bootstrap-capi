@@ -3,6 +3,7 @@ kubernetes_version: v1.28.5
 capi_image_name: rocky-89-kube-v1.28.5 #ubuntu-2204-kube-v1.26.7 rocky-89-kube-v1.28.5
 
 capi_provider_version: v0.8.0
+clusterctl_version: v1.7.1
 
 cluster_name: CLUSTER_NAME
 cluster_namespace: default

@@ -11,5 +11,5 @@ required_version = ">= 0.14.0"
 
 # Configure the OpenStack Provider
 provider "openstack" {
-  cloud = "openstack"
+  cloud = "openstack-training-prod"
 }

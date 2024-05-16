@@ -6,7 +6,7 @@ cluster_name: kind
 
 k8s_bootstrap_version: 1.29
 
-clusterctl_version: v1.5.1
+clusterctl_version: v1.7.1
 clusterctl_provider: openstack
 
 control_nodes: 1
