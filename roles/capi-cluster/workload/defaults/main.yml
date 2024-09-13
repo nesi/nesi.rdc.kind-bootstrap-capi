@@ -7,6 +7,11 @@ capi_provider_version: v0.8.0
 cluster_name: capi-cluster
 cluster_namespace: default
 
+default_security_group_id: e73a47e9-cc3a-4986-95f9-c3d101c3d448
+
+network_id: 
+router_id: 
+
 openstack_ssh_key: kahus-key
 
 cluster_control_plane_count: 1
