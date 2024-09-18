@@ -1,9 +1,11 @@
 ---
+k8s_bootstrap_version: 1.29
+
 kubernetes_version: v1.28.5
-capi_image_name: rocky-89-kube-v1.28.5 #ubuntu-2204-kube-v1.26.7 rocky-89-kube-v1.28.5
+capi_image_name: rocky-89-kube-v1.28.5
 
 capi_provider_version: v0.8.0
-clusterctl_version: v1.7.1
+clusterctl_version: v1.8.3
 
 cluster_name: CLUSTER_NAME
 cluster_namespace: default
@@ -25,3 +27,11 @@ cluster_pod_cidr: 172.168.0.0/16
 bin_dir: /usr/local/bin
 
 clouds_yaml_local_location: ~/.config/openstack/clouds.yaml
+
+capi_managed_secgroups: true
+
+yaml_openstack_cloud: openstack
+
+source_ips:
+  - 163.7.144.0/21
+  - "{{ cluster_node_cidr }}"

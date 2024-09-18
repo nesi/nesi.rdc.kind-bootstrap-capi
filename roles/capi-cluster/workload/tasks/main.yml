@@ -34,6 +34,34 @@
 
 - name: Workload | Create and initialize clusterctl and cloud manager
   block:
+
+    - name: Deployed ansible managed CAPI security groups
+      delegate_to: 127.0.0.1
+      block:  
+        - name: Create Kubernetes control plane security group
+          openstack.cloud.security_group:
+            cloud: "{{ yaml_openstack_cloud }}"
+            state: present
+            name: k8s-cluster-default-{{ cluster_name }}-secgroup-controlplane
+            description: Ansible Cluster API managed group
+          register: controlplane_secgroup
+
+        - name: Create Kubernetes worker security group
+          openstack.cloud.security_group:
+            cloud: "{{ yaml_openstack_cloud }}"
+            state: present
+            name: k8s-cluster-default-{{ cluster_name }}-secgroup-worker
+            description: Ansible Cluster API managed group
+          register: worker_secgroup
+
+        - name: Configure Kubernetes control plane security group
+          include_tasks: secgroups-control-plane.yml
+
+        - name: Configure Kubernetes worker security group
+          include_tasks: secgroups-worker.yml
+      when:
+        - "capi_managed_secgroups|default(true)|bool == false"
+        
     - name: Workload | Read clouds.yaml
       slurp:
         src: "{{ clouds_yaml_location }}"

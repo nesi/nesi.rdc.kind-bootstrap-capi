@@ -1,0 +1,84 @@
+---
+- name: In-cluster Ingress rule for control plane
+  openstack.cloud.security_group_rule:
+    cloud: "{{ yaml_openstack_cloud }}"
+    security_group: "{{ worker_secgroup.security_group.id }}"
+    protocol: any
+    remote_group: "{{ controlplane_secgroup.security_group.id }}"
+    description: In-cluster Ingress
+    state: present
+
+- name: In-cluster Ingress rule for worker
+  openstack.cloud.security_group_rule:
+    cloud: "{{ yaml_openstack_cloud }}"
+    security_group: "{{ worker_secgroup.security_group.id }}"
+    protocol: any
+    remote_group: "{{ worker_secgroup.security_group.id }}"
+    description: In-cluster Ingress
+    state: present
+
+- name: IP-in-IP (calico) rule for control plane
+  openstack.cloud.security_group_rule:
+    cloud: "{{ yaml_openstack_cloud }}"
+    security_group: "{{ worker_secgroup.security_group.id }}"
+    protocol: 4
+    remote_group: "{{ controlplane_secgroup.security_group.id }}"
+    description: IP-in-IP (calico)
+    state: present
+
+- name: IP-in-IP (calico) rule for worker
+  openstack.cloud.security_group_rule:
+    cloud: "{{ yaml_openstack_cloud }}"
+    security_group: "{{ worker_secgroup.security_group.id }}"
+    protocol: 4
+    remote_group: "{{ worker_secgroup.security_group.id }}"
+    description: IP-in-IP (calico)
+    state: present
+
+- name: BGP (calico) rule for control plane
+  openstack.cloud.security_group_rule:
+    cloud: "{{ yaml_openstack_cloud }}"
+    security_group: "{{ worker_secgroup.security_group.id }}"
+    protocol: TCP
+    port_range_min: 179
+    port_range_max: 179
+    remote_group: "{{ controlplane_secgroup.security_group.id }}"
+    description: BGP (calico)
+    state: present
+  ignore_errors: true
+
+- name: BGP (calico) rule for worker
+  openstack.cloud.security_group_rule:
+    cloud: "{{ yaml_openstack_cloud }}"
+    security_group: "{{ worker_secgroup.security_group.id }}"
+    protocol: TCP
+    port_range_min: 179
+    port_range_max: 179
+    remote_group: "{{ worker_secgroup.security_group.id }}"
+    description: BGP (calico)
+    state: present
+  ignore_errors: true
+
+- name: Node Port Services rule for worker
+  openstack.cloud.security_group_rule:
+    cloud: "{{ yaml_openstack_cloud }}"
+    security_group: "{{ worker_secgroup.security_group.id }}"
+    protocol: TCP
+    port_range_min: 30000
+    port_range_max: 32767
+    remote_ip_prefix: 0.0.0.0/0
+    description: Node Port Services
+    state: present
+  ignore_errors: true
+
+- name: Node Port Services rule for worker
+  openstack.cloud.security_group_rule:
+    cloud: "{{ yaml_openstack_cloud }}"
+    security_group: "{{ worker_secgroup.security_group.id }}"
+    protocol: UDP
+    port_range_min: 30000
+    port_range_max: 32767
+    remote_ip_prefix: 0.0.0.0/0
+    description: Node Port Services
+    state: present
+  ignore_errors: true
