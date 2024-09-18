@@ -19,6 +19,7 @@ cluster_node_cidr: 10.10.0.0/24
 
 cluster_pod_cidr: 192.168.0.0/16
 
+cluster_settle_timeout_base: 5
 bin_dir: /usr/local/bin
 
 clouds_yaml_local_location: ~/.config/openstack/clouds.yaml
@@ -26,3 +27,13 @@ clouds_yaml_location: /tmp/clouds.yaml
 
 yq_version: v4.2.0 
 yq_repo: "https://github.com/mikefarah/yq/releases/download/{{ yq_version }}/yq_linux_amd64"
+
+
+# Settings related to managing the security groups with Ansible
+
+capi_managed_secgroups: true
+
+yaml_openstack_cloud: openstack
+
+source_ips:
+  - 163.7.144.0/21

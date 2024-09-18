@@ -1,81 +1,85 @@
 ---
-- name: Workload | Create clusterctl template
-  copy:
-    src: "files/cluster-template.yml"
+- name: Create clusterctl template
+  template:
+    src: "cluster-template.yml.j2"
     dest: "/tmp/cluster-template.yml"
     mode: 0640
 
-- name: Workload | Copy create_base64_ca_cert.sh
+- name: Copy create_base64_ca_cert.sh
   copy:
     src: "files/create_base64_ca_cert.sh"
     dest: "/tmp/create_base64_ca_cert.sh"
     mode: 0770
 
-- name: Workload | Run create_base64_ca_cert for {{ cluster_name }}
+- name: Run create_base64_ca_cert for {{ cluster_name }}
   shell: >-
     /tmp/create_base64_ca_cert.sh \
     {{ clouds_yaml_location }} openstack
   become: true
   register: base64_ca_cert
 
-- name: Workload | Copy create_base64_yaml.sh
+- name: Copy create_base64_yaml.sh
   copy:
     src: "files/create_base64_yaml.sh"
     dest: "/tmp/create_base64_yaml.sh"
     mode: 0770
 
-- name: Workload | Run create_base64_yaml for {{ cluster_name }}
+- name: Run create_base64_yaml for {{ cluster_name }}
   shell: >-
     /tmp/create_base64_yaml.sh \
     {{ clouds_yaml_location }} openstack
   become: true
   register: base64_cloud_yaml
 
-- name: Workload | Create clusterctl config
+- name: Create clusterctl config
   template:
     src: "openstack-cluster-config.yml.j2"
     dest: "/tmp/{{ cluster_name }}-openstack-cluster-config.yml"
     mode: 0640
 
-- name: Workload | Generate clusterctl yaml for {{ cluster_name }}
+- name: Generate clusterctl yaml for {{ cluster_name }}
   shell: >-
     clusterctl generate cluster {{ cluster_name }} \
     --config /tmp/{{ cluster_name }}-openstack-cluster-config.yml \
     --from /tmp/cluster-template.yml > /tmp/{{ cluster_name }}.yml
   become: true
 
-- name: Workload | Wait for Kind cluster to settle
+- name: Wait for Kind cluster to settle
   pause:
     seconds: 30
 
-- name: Workload | Init {{ cluster_name }} clusterctl yaml 
+- name: Init {{ cluster_name }} clusterctl yaml 
   shell: >-
     kubectl apply -f /tmp/{{ cluster_name }}.yml
   become: true
 
-- name: Workload | Wait for {{ cluster_name }} control plane to return true
+- name: Wait for {{ cluster_name }} control plane to return true
   shell: >-
     kubectl get kubeadmcontrolplane | grep {{ cluster_name }} | grep -c true
   register: result
   until: result.stdout == "1"
-  retries: 10
+  retries: 15
   delay: 30
   become: true
 
-- name: Workload | Get {{ cluster_name }} cluster kubeconfig yaml 
+- name: Pause for {{ cluster_settle_timeout_base * cluster_control_plane_count }} minutes while cluster settles
+  ansible.builtin.pause:
+    minutes: "{{ cluster_settle_timeout_base * cluster_control_plane_count }}"
+
+- name: Get {{ cluster_name }} cluster kubeconfig yaml 
   shell: >-
     kubectl get secret -n {{ cluster_namespace }} {{ cluster_name }}-kubeconfig 
     -o jsonpath='{.data.value}'|base64 -d > /tmp/{{ cluster_name }}.kubeconfig
   become: true
 
-- name: Workload | Check for {{ cluster_name }} calico-kube nodes
+- name: Check for {{ cluster_name }} calico-kube nodes
   shell: >-
     kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig get pods -A | grep -c calico-kube
   register: calico_kube_pods
   become: true
   ignore_errors: true
 
-- name: Workload | Install CNI for {{ cluster_name }}
+- name: Install CNI for {{ cluster_name }}
   shell: >-
     kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
   become: true
