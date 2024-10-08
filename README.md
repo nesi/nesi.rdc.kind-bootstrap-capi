@@ -117,30 +117,20 @@ clouds_yaml_local_location: ~/.config/openstack/clouds.yaml
 There are the following CAPI images available
 
 ``` { .sh }
-Rocky 8.9
+Rocky 9
 
-rocky-89-kube-v1.22.17
-rocky-89-kube-v1.24.17
-rocky-89-kube-v1.26.12
-rocky-89-kube-v1.25.16
-rocky-89-kube-v1.27.6
-rocky-89-kube-v1.28.5
+rocky-9-crio-v1.28.14
+rocky-9-crio-v1.29.7
+rocky-9-crio-v1.30.5
+rocky-9-crio-v1.31.1
 
-
-Ubuntu 22.04
-
-ubuntu-2204-kube-v1.22.17
-ubuntu-2204-kube-v1.23.4
-ubuntu-2204-kube-v1.26.7
-ubuntu-2204-kube-v1.27.6
-ubuntu-2204-kube-v1.28.3
 ```
 
-For management clusters we recommend Kuberenetes version 1.27+
+For management clusters we recommend Kuberenetes version 1.31+
 
 If changing the `capi_image_name` within `servers.yml` please also ensure the `kubernetes_version` matches the same.
 
-Example would be using the image `rocky-89-kube-v1.27.6` would mean the `kubernetes_version` would be `v1.27.6`
+Example would be using the image `rocky-9-crio-v1.31.1` would mean the `kubernetes_version` would be `v1.31.1`
 
 ---
 
