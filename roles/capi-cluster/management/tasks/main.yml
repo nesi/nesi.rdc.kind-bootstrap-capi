@@ -6,6 +6,14 @@
   become: true
   ignore_errors: true
 
+- name: Management | Install Openstack Resource Controller (ORC) CRD's
+  shell: >-
+    kubectl apply \
+    -f https://github.com/k-orc/openstack-resource-controller/releases/download/{{ orc_version }}/install.yaml
+  become: true
+  when:
+    - capo_system_pods.stdout != "1"
+
 - name: Management | Install Openstack management for {{ cluster_name }}
   shell: >-
     clusterctl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig init --infrastructure {{ clusterctl_provider }}:{{ clusterctl_provider_version }}
@@ -18,11 +26,6 @@
     seconds: 120
   when:
     - capo_system_pods.stdout != "1"
-
-- name: Management | Install Openstack Resource Controller (ORC) CRD's
-  shell: >-
-    kubectl apply --server-side -f https://github.com/k-orc/openstack-resource-controller/releases/download/{{ orc_version }}/install.yaml
-  become: true
 
 - name: Management | Move Openstack management from bootstrap to {{ cluster_name }}
   shell: >-
