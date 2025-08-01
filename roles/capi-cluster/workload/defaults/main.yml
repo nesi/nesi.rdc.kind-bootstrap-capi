@@ -35,5 +35,7 @@ capi_managed_secgroups: true
 
 yaml_openstack_cloud: openstack
 
+cloud_provider_openstack_version: 1.33
+
 source_ips:
   - 163.7.144.0/21

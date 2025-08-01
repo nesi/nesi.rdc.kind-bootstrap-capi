@@ -19,6 +19,11 @@
   when:
     - capo_system_pods.stdout != "1"
 
+- name: Management | Install Openstack Resource Controller (ORC) CRD's
+  shell: >-
+    kubectl apply --server-side -f https://github.com/k-orc/openstack-resource-controller/releases/download/{{ orc_version }}/install.yaml
+  become: true
+
 - name: Management | Move Openstack management from bootstrap to {{ cluster_name }}
   shell: >-
     clusterctl move --to-kubeconfig /tmp/{{ cluster_name }}.kubeconfig -v 10

@@ -7,9 +7,9 @@
   with_items:
     - https://download.docker.com/linux/ubuntu/gpg
 
-- name: Add K8s apt keys
-  shell:
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ k8s_bootstrap_version }}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+# - name: Add K8s apt keys
+#   shell:
+#     curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ k8s_bootstrap_version }}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 - name: Add repositories
   apt_repository:
@@ -44,8 +44,8 @@
     groups: docker
   become: true
 
-- name: Install python pre-requisites
-  pip:
-    name: "{{ pip_packages }}"
-    state: present
-  become: true
+# - name: Install python pre-requisites
+#   community.general.pipx:
+#     name: "{{ pip_packages }}"
+#     state: present
+#   become: true

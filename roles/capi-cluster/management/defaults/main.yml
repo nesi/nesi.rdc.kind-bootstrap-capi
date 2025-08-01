@@ -2,4 +2,6 @@
 cluster_name: capi-cluster
 
 clusterctl_provider: openstack
-clusterctl_provider_version: v0.11.4
+clusterctl_provider_version: v0.12.4
+
+orc_version: v2.2.0

@@ -38,7 +38,7 @@ spec:
     kind: KubeadmControlPlane
     name: ${CLUSTER_NAME}-control-plane
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha7
     kind: OpenStackCluster
     name: ${CLUSTER_NAME}
 ---
@@ -61,7 +61,7 @@ spec:
       clusterName: ${CLUSTER_NAME}
       failureDomain: ${OPENSTACK_FAILURE_DOMAIN}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha7
         kind: OpenStackMachineTemplate
         name: ${CLUSTER_NAME}-md-0
       version: ${KUBERNETES_VERSION}
@@ -73,6 +73,9 @@ metadata:
 spec:
   kubeadmConfigSpec:
     clusterConfiguration:
+      apiServer:
+        extraArgs:
+          cloud-provider: external
       controllerManager:
         extraArgs:
           cloud-provider: external
@@ -91,13 +94,13 @@ spec:
         name: '{{ '{{' }} local_hostname {{ '}}' }}'
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1alpha7
       kind: OpenStackMachineTemplate
       name: ${CLUSTER_NAME}-control-plane
   replicas: ${CONTROL_PLANE_MACHINE_COUNT}
   version: ${KUBERNETES_VERSION}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha7
 kind: OpenStackCluster
 metadata:
   name: ${CLUSTER_NAME}
@@ -105,62 +108,61 @@ spec:
   apiServerLoadBalancer:
     enabled: true
     provider: ovn
-  externalNetwork:
-    id: ${OPENSTACK_EXTERNAL_NETWORK_ID}
+  cloudName: ${OPENSTACK_CLOUD}
+  dnsNameservers:
+  - ${OPENSTACK_DNS_NAMESERVERS}
+  externalNetworkId: ${OPENSTACK_EXTERNAL_NETWORK_ID}
   identityRef:
-    cloudName: ${OPENSTACK_CLOUD}
+    kind: Secret
     name: ${CLUSTER_NAME}-cloud-config
+  managedSecurityGroups: {{ capi_managed_secgroups }}
   network:
-    filter:
-      name: {{ cluster_network }}
+    name: {{ cluster_network }}
   router: 
-    filter:
-      name: {{ cluster_network }}
+    name: {{ cluster_network }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha7
 kind: OpenStackMachineTemplate
 metadata:
   name: ${CLUSTER_NAME}-control-plane
 spec:
   template:
     spec:
+      cloudName: ${OPENSTACK_CLOUD}
       flavor: ${OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR}
-      image:
-        filter:
-          name: ${OPENSTACK_IMAGE_NAME}
+      identityRef:
+        kind: Secret
+        name: ${CLUSTER_NAME}-cloud-config
+      image: ${OPENSTACK_IMAGE_NAME}
       sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
       securityGroups:
-      - filter:
-          name: default
+      - name: default
 {% if capi_managed_secgroups == false %}
-      - filter:
-          name: k8s-cluster-default-{{ cluster_name }}-secgroup-controlplane
+      - name: k8s-cluster-default-{{ cluster_name }}-secgroup-controlplane
 {% endif %}
       ports:
       - network:
-          filter:
-            name: {{ cluster_network }}
+          name: {{ cluster_network }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha7
 kind: OpenStackMachineTemplate
 metadata:
   name: ${CLUSTER_NAME}-md-0
 spec:
   template:
     spec:
+      cloudName: ${OPENSTACK_CLOUD}
       flavor: ${OPENSTACK_NODE_MACHINE_FLAVOR}
-      image:
-        filter:
-          name: ${OPENSTACK_IMAGE_NAME}
+      identityRef:
+        kind: Secret
+        name: ${CLUSTER_NAME}-cloud-config
+      image: ${OPENSTACK_IMAGE_NAME}
       sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
       securityGroups:
-      - filter:
-          name: default
+      - name: default
 {% if capi_managed_secgroups == false %}
-      - filter:
-          name: k8s-cluster-default-{{ cluster_name }}-secgroup-controlplane
+      - name: k8s-cluster-default-{{ cluster_name }}-secgroup-worker
 {% endif %}
       ports:
       - network:
-          filter:
-            name: {{ cluster_network }}
+          name: {{ cluster_network }}
