@@ -8,7 +8,7 @@
 
 - name: Management | Install Openstack Resource Controller (ORC) CRD's
   shell: >-
-    kubectl apply \
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply \
     -f https://github.com/k-orc/openstack-resource-controller/releases/download/{{ orc_version }}/install.yaml
   become: true
   when:
