@@ -12,6 +12,8 @@ required_packages:
   - kubectl
   - python3-pip
   - python3-setuptools
+  - python3-kubernetes
+  - pipx
 
 docker_packages:
   - docker-ce

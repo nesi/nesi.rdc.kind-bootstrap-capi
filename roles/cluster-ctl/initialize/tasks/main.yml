@@ -6,6 +6,13 @@
   register: pod_list
   become: true
 
+- name: Initialize | Install Openstack Resource Controller (ORC) CRD's
+  shell: >-
+    kubectl apply \
+    -f https://github.com/k-orc/openstack-resource-controller/releases/download/{{ orc_version }}/install.yaml
+  become: true
+  when: not (pod_list.resources | length > 0)
+
 - name: Initialize | Initialize the management cluster
   shell: >-
     clusterctl init --infrastructure {{ clusterctl_provider }}:{{ clusterctl_provider_version }}

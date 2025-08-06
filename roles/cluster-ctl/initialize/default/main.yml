@@ -1,8 +1,10 @@
 ---
 bin_dir: /usr/local/bin
 
-clusterctl_version: v1.7.1
+clusterctl_version: v1.10.4
 clusterctl_provider: openstack
-clusterctl_provider_version: v0.11.4
+clusterctl_provider_version: v0.12.4
 
 clouds_yaml_location: ~/.config/openstack/clouds.yaml
+
+orc_version: v2.2.0

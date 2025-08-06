@@ -7,3 +7,4 @@ group_vars/servers/servers.yml
 host.ini
 terraform/clouds.yml
 clouds.yaml
+*.kubeconfig

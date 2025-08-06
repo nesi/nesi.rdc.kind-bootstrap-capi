@@ -1,7 +1,7 @@
 ---
 bin_dir: /usr/local/bin
 
-clusterctl_version: v1.7.1
+clusterctl_version: v1.10.4
 clusterctl_provider: openstack
 
 control_nodes: 1

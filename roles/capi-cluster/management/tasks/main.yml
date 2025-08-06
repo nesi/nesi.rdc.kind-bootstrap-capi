@@ -6,6 +6,14 @@
   become: true
   ignore_errors: true
 
+- name: Management | Install Openstack Resource Controller (ORC) CRD's
+  shell: >-
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply \
+    -f https://github.com/k-orc/openstack-resource-controller/releases/download/{{ orc_version }}/install.yaml
+  become: true
+  when:
+    - capo_system_pods.stdout != "1"
+
 - name: Management | Install Openstack management for {{ cluster_name }}
   shell: >-
     clusterctl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig init --infrastructure {{ clusterctl_provider }}:{{ clusterctl_provider_version }}
@@ -32,8 +40,16 @@
   when:
     - capo_system_pods.stdout != "1"
 
-- name: Management | Print {{ cluster_name }}.kubeconfig to console
-  debug:
-    msg: "{{kubeconfig_output.stdout_lines}}"
+# - name: Management | Print {{ cluster_name }}.kubeconfig to console
+#   debug:
+#     msg: "{{kubeconfig_output.stdout_lines}}"
+#   when:
+#     - capo_system_pods.stdout != "1"
+
+- name: Management | Write {{ cluster_name }}.kubeconfig to localhost
+  delegate_to: localhost
+  ansible.builtin.copy:
+    content: "{{kubeconfig_output.stdout}}"
+    dest: "{{ cluster_name }}.kubeconfig"
   when:
     - capo_system_pods.stdout != "1"

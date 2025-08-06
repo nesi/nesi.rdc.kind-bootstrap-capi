@@ -28,19 +28,19 @@
     - name: Workload | Install cloud-controller-manager-roles.yaml
       shell: >-
         kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply \
-        -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/cloud-controller-manager-roles.yaml
+        -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/release-{{ cloud_provider_openstack_version }}/manifests/controller-manager/cloud-controller-manager-roles.yaml
       become: true
 
     - name: Workload | Install cloud-controller-manager-role-bindings.yaml
       shell: >-
         kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply \
-        -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/cloud-controller-manager-role-bindings.yaml
+        -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/release-{{ cloud_provider_openstack_version }}/manifests/controller-manager/cloud-controller-manager-role-bindings.yaml
       become: true
 
     - name: Workload | Install openstack-cloud-controller-manager-ds.yaml
       shell: >-
         kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply \
-        -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/openstack-cloud-controller-manager-ds.yaml
+        -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/release-{{ cloud_provider_openstack_version }}/manifests/controller-manager/openstack-cloud-controller-manager-ds.yaml
       become: true
   when:
     - cloud_config_secret.stdout != "1"
