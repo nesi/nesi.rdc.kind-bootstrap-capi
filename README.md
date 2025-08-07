@@ -4,7 +4,19 @@ This repo contains the ansible scripts to bootstrap a CAPI cluster using kind as
 
 This is based on [Kubernetes Cluster API Provider OpenStack](https://cluster-api-openstack.sigs.k8s.io/) under the getting started link.
 
-You also need to ensure that a CAPI vm image is avaliable, the one used in the NeSI RDC is `ubuntu-2204-kube-v1.26.7`
+You also need to ensure that a CAPI vm image is avaliable, the one used in the NeSI RDC is `rocky-9-containerd-v1.33.3`
+
+### Management Support
+
+The Management version matrix represents the versions of this Workload repo which are recommended with the Management repo versions
+
+| Mangement Version    | Workload Version |
+| -------------------- | ---------------- |
+| v0.2.X               | v0.3.X           |
+| v0.4.X               | v0.4.X           |
+
+
+Here is the [CAPI Workload](https://github.com/lbrick/ansible-capi-workload) repo
 
 ## Install ansible dependencies
 
@@ -119,10 +131,14 @@ There are the following CAPI images available
 ``` { .sh }
 Rocky 9
 
-rocky-9-crio-v1.28.14
-rocky-9-crio-v1.29.7
-rocky-9-crio-v1.30.5
-rocky-9-crio-v1.31.1
+rocky-9-containerd-v1.28.14
+rocky-9-containerd-v1.29.7
+rocky-9-containerd-v1.30.5
+rocky-9-containerd-v1.31.1
+rocky-9-containerd-v1.31.6
+rocky-9-containerd-v1.32.2
+rocky-9-containerd-v1.32.7
+rocky-9-containerd-v1.33.3
 
 ```
 
@@ -130,7 +146,7 @@ For management clusters we recommend Kuberenetes version 1.31+
 
 If changing the `capi_image_name` within `servers.yml` please also ensure the `kubernetes_version` matches the same.
 
-Example would be using the image `rocky-9-crio-v1.31.1` would mean the `kubernetes_version` would be `v1.31.1`
+Example would be using the image `rocky-9-containerd-v1.33.3` would mean the `kubernetes_version` would be `v1.33.3`
 
 ---
 
