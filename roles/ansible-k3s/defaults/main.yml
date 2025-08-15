@@ -1,10 +1,8 @@
 ---
 bin_dir: /usr/local/bin
 
-kind_version: latest
-cluster_name: kind
-
-k8s_bootstrap_version: 1.33
+kubernetes_version: v1.33.3
+k3s_version: "{{ kuberentes_version }}+k3s1"
 
 clusterctl_version: v1.10.4
 clusterctl_provider: openstack

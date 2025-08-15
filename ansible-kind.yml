@@ -9,7 +9,7 @@
   become_user: root
   any_errors_fatal: "true"
   roles:
-    - { role: ansible-kind }
+    - { role: ansible-k3s }
     - { role: cluster-ctl/cli-install }
     - { role: cluster-ctl/initialize }
     - { role: capi-cluster/workload }
