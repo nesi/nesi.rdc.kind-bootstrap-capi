@@ -1,6 +1,6 @@
 # Create services instance
 resource "openstack_compute_instance_v2" "kind_instance" {
-  name            = "kind-boostrap-capi"
+  name            = "capi-seed-vm"
   flavor_id       = var.kind_flavor_id
   image_id        = var.kind_image_id
   key_pair        = var.key_pair

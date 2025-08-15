@@ -44,7 +44,7 @@
     --from /tmp/cluster-template.yml > /tmp/{{ cluster_name }}.yml
   become: true
 
-- name: Wait for Kind cluster to settle
+- name: Wait for k3s cluster to settle
   pause:
     seconds: 30
 
