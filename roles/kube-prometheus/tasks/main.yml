@@ -1,0 +1,54 @@
+---
+- name: Clone kube-prometheus
+  ansible.builtin.git:
+    repo: "https://github.com/prometheus-operator/kube-prometheus.git"
+    dest: /opt/kube-prometheus
+    version: "{{ kube_prometheus_version }}"
+    force: true
+  become: true
+
+- name: Configure remote write (Prometheus)
+  ansible.builtin.blockinfile:
+    path: /opt/kube-prometheus/manifests/prometheus-prometheus.yaml
+    block: |
+      {% filter indent(width=2, first=true) %}
+      remoteWrite:
+        - url: 'http://{{ prometheus_endpoint }}:9091/api/v1/metrics/write'
+      {% endfilter %}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+  become: true
+
+- name: Update externalLabels in the YAML file
+  ansible.builtin.lineinfile:
+    path: /opt/kube-prometheus/manifests/prometheus-prometheus.yaml
+    regexp: '^  externalLabels: *$'  # Match the externalLabels line for placement
+    line: |
+      {% filter indent(width=2, first=true) %}
+      externalLabels:
+        cluster: {{ cluster_name }}
+      {% endfilter %}
+  become: true
+
+- name: Setup kube-prometheus
+  ansible.builtin.shell:
+    chdir: /opt/kube-prometheus
+    cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply --server-side -f manifests/setup
+
+- name: Wait for setup to complete
+  ansible.builtin.shell:
+    cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
+
+- name: Install kube-prometheus
+  ansible.builtin.shell:
+    chdir: /opt/kube-prometheus
+    cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f manifests/
+
+- name: Copy promtail template
+  ansible.builtin.template:
+    src: promtail.yml.j2
+    dest: /tmp/promtail-{{ cluster_name }}.yml
+  become: true
+
+- name: Install promtail
+  ansible.builtin.shell:
+    cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f /tmp/promtail-{{ cluster_name }}.yml

@@ -1,0 +1,14 @@
+---
+- name: Get velero version
+  ansible.builtin.command: "velero version --client-only"
+  register: velero_cmd
+  changed_when: false
+
+- name: Extract version from velero output
+  ansible.builtin.set_fact:
+    velero_installed_version: "{{ velero_cmd.stdout_lines | select('search','Version') | list | first | regex_replace('^.*Version: ([^ ]+).*$', '\\1') }}"
+
+- name: Fail if velero version does not match
+  ansible.builtin.fail:
+    msg: "Installed velero version ({{ velero_installed_version }}) does not match expected version ({{ velero_version }})"
+  when: velero_installed_version != velero_version

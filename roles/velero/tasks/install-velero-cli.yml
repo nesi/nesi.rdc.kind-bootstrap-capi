@@ -1,0 +1,28 @@
+---
+- name: Ensure {{ velero_tmp_dir }} exists
+  ansible.builtin.file:
+    path: "{{ velero_tmp_dir }}"
+    state: directory
+    mode: '0777'
+
+- name: Download velero release to tmp location {{ velero_tmp_dir }}
+  get_url:
+    url: "{{ velero_tar_url }}"
+    dest: "{{ velero_tmp_dir }}/velero-{{ velero_version }}-linux-amd64.tar.gz"
+    mode: 0755
+    force: true
+  become: true
+
+- name: Extract velero tarball
+  ansible.builtin.unarchive:
+    src: "{{ velero_tmp_dir }}/velero-{{ velero_version }}-linux-amd64.tar.gz"
+    dest: "{{ velero_tmp_dir }}"
+    remote_src: yes
+
+- name: Move velero executable to /usr/local/bin
+  ansible.builtin.copy:
+    src: "{{ velero_tmp_dir }}/velero-{{ velero_version }}-linux-amd64/velero"   # path inside the extracted dir
+    dest: /usr/local/bin/velero
+    mode: '0755'
+    remote_src: yes
+  become: true

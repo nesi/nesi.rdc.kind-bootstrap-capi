@@ -1,0 +1,13 @@
+---
+- name: Install velero
+  include_tasks: install-velero-cli.yml
+
+- name: Check velero cli
+  include_tasks: check-velero-cli.yml
+
+- name: Initialize velero
+  include_tasks: initialize-velero.yml
+
+- name: Setup velero backup schedule
+  include_tasks: setup-velero-backup.yml
+

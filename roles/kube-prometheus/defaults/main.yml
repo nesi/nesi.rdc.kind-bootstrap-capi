@@ -1,0 +1,7 @@
+---
+cluster_name: "some-cluster-here"
+
+tmp_dir: "/tmp/{{ cluster_name }}"
+kube_prometheus_version: release-0.14
+
+prometheus_endpoint: "someEndPointSomewhere"

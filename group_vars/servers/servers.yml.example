@@ -31,7 +31,7 @@ bin_dir: /usr/local/bin
 
 clouds_yaml_local_location: ~/.config/openstack/clouds.yaml
 
-capi_managed_secgroups: true
+capi_managed_secgroups: false
 
 yaml_openstack_cloud: openstack
 
@@ -40,3 +40,17 @@ cloud_provider_openstack_version: 1.33
 source_ips:
   - 163.7.144.0/21
   - "{{ cluster_node_cidr }}"
+
+
+## Backup Settings
+
+velero_version: v1.16.2
+
+velero_bucket_name: "OPENSTACK_BUCKET_NAME"
+
+
+## Monitroing settings
+
+prometheus_endpoint: "someEndPointSomewhere"
+
+kube_prometheus_version: release-0.14

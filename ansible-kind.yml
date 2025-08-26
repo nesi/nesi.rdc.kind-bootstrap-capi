@@ -3,14 +3,30 @@
   hosts: localhost
   gather_facts: False
   roles:
-    - { role: infra/wait-for-hosts }
+    - role: infra/wait-for-hosts
+      tags: [setup, backup, monitoring]
 
 - hosts: servers
   become_user: root
   any_errors_fatal: "true"
   roles:
-    - { role: ansible-k3s }
-    - { role: cluster-ctl/cli-install }
-    - { role: cluster-ctl/initialize }
-    - { role: capi-cluster/workload }
-    - { role: capi-cluster/management }
+    - role: ansible-k3s
+      tags: [setup]
+
+    - role: cluster-ctl/cli-install
+      tags: [setup]
+
+    - role: cluster-ctl/initialize
+      tags: [setup]
+
+    - role: capi-cluster/workload
+      tags: [setup]
+
+    - role: capi-cluster/management
+      tags: [setup]
+
+    - role: velero
+      tags: [setup, backup]
+
+    - role: kube-prometheus
+      tags: [setup, monitoring]
