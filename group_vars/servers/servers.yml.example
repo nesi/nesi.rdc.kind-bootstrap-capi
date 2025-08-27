@@ -55,7 +55,8 @@ velero_bucket_name: "OPENSTACK_BUCKET_NAME"
 
 enable_monitoring: false
 
-prometheus_endpoint: "someEndPointSomewhere"
+mimir_domain: "MIMIR_DOMAIN"
+loki_domain: "LOKI_DOMAIN"
 
 monitoring_username: someuser
 monitoring_password: supersecretpassword
