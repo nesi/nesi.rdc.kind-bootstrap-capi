@@ -44,6 +44,8 @@ source_ips:
 
 ## Backup Settings
 
+enable_backup: false
+
 velero_version: v1.16.2
 
 velero_bucket_name: "OPENSTACK_BUCKET_NAME"
@@ -51,6 +53,11 @@ velero_bucket_name: "OPENSTACK_BUCKET_NAME"
 
 ## Monitroing settings
 
+enable_monitoring: false
+
 prometheus_endpoint: "someEndPointSomewhere"
+
+monitoring_username: someuser
+monitoring_password: supersecretpassword
 
 kube_prometheus_version: release-0.14

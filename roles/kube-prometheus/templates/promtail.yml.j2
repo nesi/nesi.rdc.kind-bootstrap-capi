@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: promtail-daemonset
+  namespace: monitoring
 spec:
   selector:
     matchLabels:
@@ -46,6 +47,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: promtail-config
+  namespace: monitoring
 data:
   promtail.yaml: |
     server:
@@ -54,6 +56,9 @@ data:
 
     clients:
     - url: http://{{ prometheus_endpoint }}:3101/loki/api/v1/push
+      basic_auth:
+        username: {{ monitoring_username }}
+        password: {{ monitoring_password }}
 
     positions:
       filename: /tmp/positions.yaml
@@ -127,7 +132,7 @@ metadata:
 subjects:
     - kind: ServiceAccount
       name: promtail-serviceaccount
-      namespace: default
+      namespace: monitoring
 roleRef:
     kind: ClusterRole
     name: promtail-clusterrole

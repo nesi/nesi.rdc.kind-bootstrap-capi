@@ -1,13 +1,22 @@
 ---
+- name: Skip backup configuration (debug message)
+  ansible.builtin.debug:
+    msg: "Backup is disabled. Set enable_backup=true to configure backup components."
+  when: not enable_backup | default(false) | bool
+
 - name: Install velero
   include_tasks: install-velero-cli.yml
+  when: enable_backup | default(false) | bool
 
 - name: Check velero cli
   include_tasks: check-velero-cli.yml
+  when: enable_backup | default(false) | bool
 
 - name: Initialize velero
   include_tasks: initialize-velero.yml
+  when: enable_backup | default(false) | bool
 
 - name: Setup velero backup schedule
   include_tasks: setup-velero-backup.yml
+  when: enable_backup | default(false) | bool
 

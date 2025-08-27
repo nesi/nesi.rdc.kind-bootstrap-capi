@@ -1,54 +1,65 @@
 ---
-- name: Clone kube-prometheus
-  ansible.builtin.git:
-    repo: "https://github.com/prometheus-operator/kube-prometheus.git"
-    dest: /opt/kube-prometheus
-    version: "{{ kube_prometheus_version }}"
-    force: true
-  become: true
+- name: Skip monitoring configuration (debug message)
+  ansible.builtin.debug:
+    msg: "Monitoring is disabled. Set enable_monitoring=true to configure monitoring components."
+  when: not enable_monitoring | default(false) | bool
 
-- name: Configure remote write (Prometheus)
-  ansible.builtin.blockinfile:
-    path: /opt/kube-prometheus/manifests/prometheus-prometheus.yaml
-    block: |
-      {% filter indent(width=2, first=true) %}
-      remoteWrite:
-        - url: 'http://{{ prometheus_endpoint }}:9091/api/v1/metrics/write'
-      {% endfilter %}
-    marker: "# {mark} ANSIBLE MANAGED BLOCK"
-  become: true
+- block:
+    - name: Clone kube-prometheus
+      ansible.builtin.git:
+        repo: "https://github.com/prometheus-operator/kube-prometheus.git"
+        dest: /opt/kube-prometheus
+        version: "{{ kube_prometheus_version }}"
+        force: true
+      become: true
 
-- name: Update externalLabels in the YAML file
-  ansible.builtin.lineinfile:
-    path: /opt/kube-prometheus/manifests/prometheus-prometheus.yaml
-    regexp: '^  externalLabels: *$'  # Match the externalLabels line for placement
-    line: |
-      {% filter indent(width=2, first=true) %}
-      externalLabels:
-        cluster: {{ cluster_name }}
-      {% endfilter %}
-  become: true
+    - name: Configure remote write (Prometheus)
+      ansible.builtin.blockinfile:
+        path: /opt/kube-prometheus/manifests/prometheus-prometheus.yaml
+        block: |
+          {% filter indent(width=2, first=true) %}
+          remoteWrite:
+            - url: 'http://{{ prometheus_endpoint }}:9091/api/v1/metrics/write'
+              basicAuth:
+                username: {{ monitoring_username }}
+                password: {{ monitoring_password }}
+          {% endfilter %}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      become: true
 
-- name: Setup kube-prometheus
-  ansible.builtin.shell:
-    chdir: /opt/kube-prometheus
-    cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply --server-side -f manifests/setup
+    - name: Update externalLabels in the YAML file
+      ansible.builtin.lineinfile:
+        path: /opt/kube-prometheus/manifests/prometheus-prometheus.yaml
+        regexp: '^  externalLabels: *$'  # Match the externalLabels line for placement
+        line: |
+          {% filter indent(width=2, first=true) %}
+          externalLabels:
+            cluster: {{ cluster_name }}
+          {% endfilter %}
+      become: true
 
-- name: Wait for setup to complete
-  ansible.builtin.shell:
-    cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
+    - name: Setup kube-prometheus
+      ansible.builtin.shell:
+        chdir: /opt/kube-prometheus
+        cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply --server-side -f manifests/setup
 
-- name: Install kube-prometheus
-  ansible.builtin.shell:
-    chdir: /opt/kube-prometheus
-    cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f manifests/
+    - name: Wait for setup to complete
+      ansible.builtin.shell:
+        cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
 
-- name: Copy promtail template
-  ansible.builtin.template:
-    src: promtail.yml.j2
-    dest: /tmp/promtail-{{ cluster_name }}.yml
-  become: true
+    - name: Install kube-prometheus
+      ansible.builtin.shell:
+        chdir: /opt/kube-prometheus
+        cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f manifests/
 
-- name: Install promtail
-  ansible.builtin.shell:
-    cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f /tmp/promtail-{{ cluster_name }}.yml
+    - name: Copy promtail template
+      ansible.builtin.template:
+        src: promtail.yml.j2
+        dest: /tmp/promtail-{{ cluster_name }}.yml
+      become: true
+
+    - name: Install promtail
+      ansible.builtin.shell:
+        cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f /tmp/promtail-{{ cluster_name }}.yml
+    
+  when: enable_monitoring | default(false) | bool

@@ -1,4 +1,6 @@
 ---
+enable_backup: false
+
 velero_tmp_dir: /tmp/velero
 
 velero_version: v1.16.2
