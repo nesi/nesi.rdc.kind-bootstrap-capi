@@ -1,0 +1,79 @@
+---
+- name: Skip monitoring configuration (debug message)
+  ansible.builtin.debug:
+    msg: "Monitoring is disabled. Set enable_monitoring=true to configure monitoring components."
+  when: not enable_monitoring | default(false) | bool
+
+- block:
+    - name: Clone kube-prometheus
+      ansible.builtin.git:
+        repo: "https://github.com/prometheus-operator/kube-prometheus.git"
+        dest: /opt/kube-prometheus
+        version: "{{ kube_prometheus_version }}"
+        force: true
+      become: true
+
+    - name: Configure remote write (Prometheus)
+      ansible.builtin.blockinfile:
+        path: /opt/kube-prometheus/manifests/prometheus-prometheus.yaml
+        block: |
+          {% filter indent(width=2, first=true) %}
+          remoteWrite:
+            - url: '{{ mimir_endpoint_full }}'
+              basicAuth:
+                username:
+                  name: remote-user-secret
+                  key: username
+                password:
+                  name: remote-user-secret
+                  key: password
+          {% endfilter %}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      become: true
+
+    - name: Update externalLabels in the YAML file
+      ansible.builtin.lineinfile:
+        path: /opt/kube-prometheus/manifests/prometheus-prometheus.yaml
+        regexp: '^  externalLabels: *$'  # Match the externalLabels line for placement
+        line: |
+          {% filter indent(width=2, first=true) %}
+          externalLabels:
+            cluster: {{ cluster_name }}
+          {% endfilter %}
+      become: true
+
+    - name: Setup kube-prometheus
+      ansible.builtin.shell:
+        chdir: /opt/kube-prometheus
+        cmd: kubectl --kubeconfig {{ kube_config_path }} apply --server-side -f manifests/setup
+
+    - name: Wait for setup to complete
+      ansible.builtin.shell:
+        cmd: kubectl --kubeconfig {{ kube_config_path }} wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
+
+    - name: Render remote user secret template
+      ansible.builtin.template:
+        src: prometheus-user-secret.yml.j2
+        dest: /tmp/prometheus-remote-user-secret.yaml
+        mode: '0600'
+
+    - name: Apply remote user secret
+      ansible.builtin.shell: >
+        kubectl --kubeconfig {{ kube_config_path }} apply -f /tmp/prometheus-remote-user-secret.yaml
+
+    - name: Install kube-prometheus
+      ansible.builtin.shell:
+        chdir: /opt/kube-prometheus
+        cmd: kubectl --kubeconfig {{ kube_config_path }} apply -f manifests/
+
+    - name: Copy promtail template
+      ansible.builtin.template:
+        src: promtail.yml.j2
+        dest: /tmp/promtail-{{ cluster_name }}.yml
+      become: true
+
+    - name: Install promtail
+      ansible.builtin.shell:
+        cmd: kubectl --kubeconfig {{ kube_config_path }} apply -f /tmp/promtail-{{ cluster_name }}.yml
+    
+  when: enable_monitoring | default(false) | bool

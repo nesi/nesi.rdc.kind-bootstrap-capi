@@ -1,0 +1,58 @@
+---
+- name: Copy velero clouds.yaml with app creds
+  ansible.builtin.copy:
+    src: "{{ clouds_yaml_local_location }}"
+    dest: "{{ velero_tmp_dir }}/clouds.yaml"
+    mode: '0755'
+
+- name: Get clouds.yaml content
+  ansible.builtin.slurp:
+    src: "{{ velero_tmp_dir }}/clouds.yaml"
+  register: clouds_yaml_content
+
+- name: Create OpenStack credentials secret from file
+  ansible.builtin.template:
+    src: openstack-credentials.yml.j2
+    dest: "{{ velero_tmp_dir }}/openstack-credentials.yml"
+  become: true
+
+- name: Run velero install for openstack
+  ansible.builtin.shell: >
+    velero install \
+       --kubeconfig {{ kubeconfig_path }} \
+       --provider "community.openstack.org/openstack" \
+       --plugins lirt/velero-plugin-for-openstack:{{ velero_openstack_provider_version }} \
+       --bucket {{ velero_bucket_name }} \
+       --no-secret \
+       --backup-location-config cloud={{ yaml_openstack_cloud }}
+  environment:
+    OS_CLOUD: "{{ yaml_openstack_cloud}}"
+
+- name: Apply OpenStack credentials secret
+  ansible.builtin.shell: >
+    kubectl --kubeconfig {{ kubeconfig_path }} apply -f {{ velero_tmp_dir }}/openstack-credentials.yml
+
+- name: Create patch file for Velero deployment
+  ansible.builtin.copy:
+    content: |
+      spec:
+        template:
+          spec:
+            containers:
+            - name: velero
+              env:
+              - name: OS_CLIENT_CONFIG_FILE
+                value: /etc/openstack/clouds.yaml
+              volumeMounts:
+              - name: openstack-credentials
+                mountPath: /etc/openstack
+                readOnly: true
+            volumes:
+            - name: openstack-credentials
+              secret:
+                secretName: openstack-credentials
+    dest: "{{ velero_tmp_dir }}/velero-patch.yaml"
+
+- name: Apply patch to Velero deployment
+  ansible.builtin.shell: >
+    kubectl --kubeconfig {{ kubeconfig_path }} patch deployment velero -n velero --patch-file {{ velero_tmp_dir }}/velero-patch.yaml

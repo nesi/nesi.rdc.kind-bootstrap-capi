@@ -40,12 +40,6 @@
   when:
     - capo_system_pods.stdout != "1"
 
-# - name: Management | Print {{ cluster_name }}.kubeconfig to console
-#   debug:
-#     msg: "{{kubeconfig_output.stdout_lines}}"
-#   when:
-#     - capo_system_pods.stdout != "1"
-
 - name: Management | Write {{ cluster_name }}.kubeconfig to localhost
   delegate_to: localhost
   ansible.builtin.copy:
