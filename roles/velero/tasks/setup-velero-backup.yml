@@ -1,15 +1,45 @@
 ---
-- name: Create Velero backup schedules
-  ansible.builtin.shell: >
-    velero schedule create {{ item.name }}
-    --kubeconfig {{ kubeconfig_path }}
-    --schedule="{{ item.schedule }}"
-    --namespace velero
-    --ttl={{ item.ttl }}
-  loop: "{{ velero_backup_schedules }}"
-
-- name: Create initial Velero backup
+- name: Check if Velero schedule exists
   ansible.builtin.shell: >
     velero --kubeconfig {{ kubeconfig_path }} \
-       backup create initial-capi-backup --ttl=8760h
+    schedule get {{ item.name }} -o json
+  register: velero_schedule_check
+  loop: "{{ velero_backup_schedules }}"
+  ignore_errors: true
+  changed_when: false
+
+- name: Create Velero backup schedules if missing
+  ansible.builtin.shell: >
+    velero --kubeconfig {{ kubeconfig_path }} \
+    schedule create {{ item.item.name }} \
+    --schedule="{{ item.item.schedule }}" \
+    --namespace velero \
+    --ttl={{ item.item.ttl }}
+  loop: "{{ velero_schedule_check.results }}"
+  when: item.rc != 0
+  changed_when: true
+
+# - name: Debug Velero schedule status
+#   ansible.builtin.debug:
+#     msg: >-
+#       Schedule '{{ item.item.name }}' {{
+#       'already exists' if item.rc == 0 else 'was created' }}
+#   loop: "{{ velero_schedule_check.results }}"
+
+- name: Check if initial Velero backup exists
+  ansible.builtin.shell: >
+    velero --kubeconfig {{ kubeconfig_path }} \
+    backup get initial-capi-backup -o json
+  register: velero_initial_backup_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Create initial Velero backup if missing
+  ansible.builtin.shell: >
+    velero --kubeconfig {{ kubeconfig_path }} \
+    backup create initial-capi-backup \
+    --namespace velero \
+    --ttl=8760h
+  when: velero_initial_backup_check.rc != 0
+  changed_when: true
 

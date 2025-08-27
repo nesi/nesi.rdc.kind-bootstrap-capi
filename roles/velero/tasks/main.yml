@@ -6,7 +6,8 @@
 
 - block:
     - name: Check if velero is installed
-      ansible.builtin.command: "velero version --client-only"
+      ansible.builtin.shell: >
+        velero version --client-only
       register: velero_cmd
       ignore_errors: true
       changed_when: false
@@ -36,20 +37,7 @@
       include_tasks: initialize-velero.yml
       when: velero_pods_count.stdout | int == 0
 
-    - name: Check if Velero schedules exist
-      ansible.builtin.shell: >
-        velero --kubeconfig {{ kubeconfig_path }} schedule get 2>/dev/null | wc -l
-      register: velero_schedule_count
-      changed_when: false
-      failed_when: false
-
-    - name: Debug Velero schedule presence
-      ansible.builtin.debug:
-        msg: "Velero schedules already exist ({{ velero_schedule_count.stdout }} schedules)."
-      when: velero_schedule_count.stdout | int > 1
-
     - name: Setup velero backup schedule
       include_tasks: setup-velero-backup.yml
-      when: velero_schedule_count.stdout | int == 0
 
   when: enable_backup | default(false) | bool

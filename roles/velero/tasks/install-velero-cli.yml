@@ -6,7 +6,7 @@
     mode: '0777'
 
 - name: Download velero release to tmp location {{ velero_tmp_dir }}
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ velero_tar_url }}"
     dest: "{{ velero_tmp_dir }}/velero-{{ velero_version }}-linux-amd64.tar.gz"
     mode: 0755
