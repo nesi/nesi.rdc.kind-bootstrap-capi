@@ -186,6 +186,17 @@ You will need to update the values in `group_vars/servers/servers.yaml` with the
 
 The final playbook to run is the terraform destroy, this will tear down the kind instance after the new CAPI Management cluster has been created.
 
+
+## Enabling Velero backups
+
+Velero role [README.md](roles/velero/README.md)
+
+
+## Enabling logging and Metrics
+
+Monitoring role [README.md](roles/kube-prometheus/README.md)
+
+
 ## Notes
 
 If running this outside of the NeSI RDC then you will need to adjust your values based on your cloud proivder. This also all based on the cloud provider running an `openstack` base
