@@ -21,7 +21,18 @@ As explained above the `kubeconfig_path` is the kubernetes config file for the c
 
 ## Backups
 
-Currently this role only sets up a scheduled monthly backup with the backups lasting for 1 year. This may be improved on in the future where we have a variable to set differnt backup schedules, but for now its only 1 a month
+Currently this role sets up a scheduled weekly and monthly backup with the weekly backups lasting for 1 month and monthly backups lasting for 1 year.
+
+Here is the variable should you wish to add more or change them
+```
+velero_backup_schedules:
+  - name: capi-monthly-backup
+    schedule: "@every 720h"
+    ttl: 8760h
+  - name: capi-weekly-backup
+    schedule: "@every 168h"
+    ttl: 720h
+```
 
 
 ## Notes

@@ -17,3 +17,11 @@ velero_bucket_name: "kahu-velero-capi-dev"
 clouds_yaml_local_location: "/etc/velero/clouds.yaml"
 
 yaml_openstack_cloud: openstack
+
+velero_backup_schedules:
+  - name: capi-monthly-backup
+    schedule: "@every 720h"
+    ttl: 8760h
+  - name: capi-weekly-backup
+    schedule: "@every 168h"
+    ttl: 720h

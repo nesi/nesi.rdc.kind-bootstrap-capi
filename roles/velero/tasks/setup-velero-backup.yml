@@ -1,9 +1,12 @@
 ---
-- name: Create Velero backup schedule
+- name: Create Velero backup schedules
   ansible.builtin.shell: >
-    velero schedule \
-       --kubeconfig {{ kubeconfig_path }} \
-       create capi-monthly-backup --schedule="@every 720h" --namespace velero --ttl=8760h
+    velero schedule create {{ item.name }}
+    --kubeconfig {{ kubeconfig_path }}
+    --schedule="{{ item.schedule }}"
+    --namespace velero
+    --ttl={{ item.ttl }}
+  loop: "{{ velero_backup_schedules }}"
 
 - name: Create initial Velero backup
   ansible.builtin.shell: >
