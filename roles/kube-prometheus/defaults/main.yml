@@ -6,7 +6,8 @@ enable_monitoring: false
 tmp_dir: "/tmp/{{ cluster_name }}"
 kube_prometheus_version: release-0.14
 
-prometheus_endpoint: "someEndPointSomewhere"
+mimir_endpoint: "someEndPointSomewhere"
+loki_endpoint: "someEndPointSomewhere"
 
 monitoring_username: someuser
 monitoring_password: supersecretpassword

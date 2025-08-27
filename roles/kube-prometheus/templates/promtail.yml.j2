@@ -13,7 +13,7 @@ spec:
       labels:
         name: promtail
     spec:
-      serviceAccount: promtail-serviceaccount
+      serviceAccountName: promtail-serviceaccount
       containers:
       - name: promtail-container
         image: grafana/promtail
@@ -55,7 +55,7 @@ data:
       grpc_listen_port: 0
 
     clients:
-    - url: http://{{ prometheus_endpoint }}:3101/loki/api/v1/push
+    - url: http://{{ loki_endpoint }}/loki/api/v1/push
       basic_auth:
         username: {{ monitoring_username }}
         password: {{ monitoring_password }}
@@ -123,6 +123,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: promtail-serviceaccount
+  namespace: monitoring
 
 --- # Rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1

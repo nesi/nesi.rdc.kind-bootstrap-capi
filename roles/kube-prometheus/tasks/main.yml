@@ -19,10 +19,14 @@
         block: |
           {% filter indent(width=2, first=true) %}
           remoteWrite:
-            - url: 'http://{{ prometheus_endpoint }}:9091/api/v1/metrics/write'
+            - url: 'http://{{ mimir_endpoint }}/api/v1/push'
               basicAuth:
-                username: {{ monitoring_username }}
-                password: {{ monitoring_password }}
+                username:
+                  name: remote-user-secret
+                  key: username
+                password:
+                  name: remote-user-secret
+                  key: password
           {% endfilter %}
         marker: "# {mark} ANSIBLE MANAGED BLOCK"
       become: true
@@ -46,6 +50,16 @@
     - name: Wait for setup to complete
       ansible.builtin.shell:
         cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
+
+    - name: Render remote user secret template
+      ansible.builtin.template:
+        src: prometheus-user-secret.yml.j2
+        dest: /tmp/prometheus-remote-user-secret.yaml
+        mode: '0600'
+
+    - name: Apply remote user secret
+      ansible.builtin.shell: >
+        kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f /tmp/prometheus-remote-user-secret.yaml
 
     - name: Install kube-prometheus
       ansible.builtin.shell:
