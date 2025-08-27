@@ -55,10 +55,10 @@ data:
       grpc_listen_port: 0
 
     clients:
-    - url: http://{{ loki_endpoint }}/loki/api/v1/push
+    - url: {{ loki_endpoint_full }}
       basic_auth:
-        username: {{ monitoring_username }}
-        password: {{ monitoring_password }}
+        username: {{ loki_username }}
+        password: {{ loki_password }}
 
     positions:
       filename: /tmp/positions.yaml

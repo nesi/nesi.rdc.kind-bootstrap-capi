@@ -19,7 +19,7 @@
         block: |
           {% filter indent(width=2, first=true) %}
           remoteWrite:
-            - url: 'http://{{ mimir_endpoint }}/api/v1/push'
+            - url: '{{ mimir_endpoint_full }}'
               basicAuth:
                 username:
                   name: remote-user-secret
@@ -45,11 +45,11 @@
     - name: Setup kube-prometheus
       ansible.builtin.shell:
         chdir: /opt/kube-prometheus
-        cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply --server-side -f manifests/setup
+        cmd: kubectl --kubeconfig {{ kube_config_path }} apply --server-side -f manifests/setup
 
     - name: Wait for setup to complete
       ansible.builtin.shell:
-        cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
+        cmd: kubectl --kubeconfig {{ kube_config_path }} wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
 
     - name: Render remote user secret template
       ansible.builtin.template:
@@ -59,12 +59,12 @@
 
     - name: Apply remote user secret
       ansible.builtin.shell: >
-        kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f /tmp/prometheus-remote-user-secret.yaml
+        kubectl --kubeconfig {{ kube_config_path }} apply -f /tmp/prometheus-remote-user-secret.yaml
 
     - name: Install kube-prometheus
       ansible.builtin.shell:
         chdir: /opt/kube-prometheus
-        cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f manifests/
+        cmd: kubectl --kubeconfig {{ kube_config_path }} apply -f manifests/
 
     - name: Copy promtail template
       ansible.builtin.template:
@@ -74,6 +74,6 @@
 
     - name: Install promtail
       ansible.builtin.shell:
-        cmd: kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f /tmp/promtail-{{ cluster_name }}.yml
+        cmd: kubectl --kubeconfig {{ kube_config_path }} apply -f /tmp/promtail-{{ cluster_name }}.yml
     
   when: enable_monitoring | default(false) | bool
