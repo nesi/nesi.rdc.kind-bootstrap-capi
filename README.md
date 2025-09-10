@@ -1,202 +1,290 @@
 # NeSI RDC Kind Bootstrap CAPI Cluster
 
-This repo contains the ansible scripts to bootstrap a CAPI cluster using kind as the jump point to get it started.
+## Overview
 
-This is based on [Kubernetes Cluster API Provider OpenStack](https://cluster-api-openstack.sigs.k8s.io/) under the getting started link.
+This repository provides Ansible automation scripts for bootstrapping a Cluster API (CAPI) management cluster on NeSI RDC (Research and Development Cloud) infrastructure. It uses a temporary Kind (Kubernetes in Docker) instance as the jump point to provision and configure the cluster, leveraging the Kubernetes Cluster API Provider OpenStack.
 
-You also need to ensure that a CAPI vm image is avaliable, the one used in the NeSI RDC is `rocky-9-containerd-v1.33.3`
+### Key Features
+- Automated CAPI cluster provisioning with OpenStack integration
+- Self-hosted management cluster creation
+- Built-in monitoring and backup capabilities
+- Support for Rocky Linux-based Kubernetes node images
+- Compatible with NeSI RDC environment
 
-### Management Support
+### Architecture Summary
+The workflow creates a temporary VM for Kind, installs CAPI components, provisions the target cluster on OpenStack, promotes it to management status, and tears down the bootstrap infrastructure. Optional roles can add monitoring (kube-prometheus) and backups (Velero).
 
-The Management version matrix represents the versions of this Workload repo which are recommended with the Management repo versions
+### Management Support Matrix
 
-| Mangement Version    | Workload Version |
-| -------------------- | ---------------- |
-| v0.2.X               | v0.3.X           |
-| v0.4.X               | v0.4.X           |
+The following versions represent recommended pairings between management and workload repositories:
 
+| Management Version | Workload Version |
+|--------------------|------------------|
+| v0.2.X             | v0.3.X          |
+| v0.4.X             | v0.4.X          |
 
-Here is the [CAPI Workload](https://github.com/lbrick/ansible-capi-workload) repo
+Related repository: [CAPI Workload](https://github.com/lbrick/ansible-capi-workload)
 
-## Install ansible dependencies
+## Table of Contents
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Detailed Setup](#detailed-setup)
+- [Configuration](#configuration)
+- [Deployment](#deployment)
+- [Extending Features](#extending-features)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
-``` { .sh }
+## Prerequisites
+
+### Required Access
+- Active NeSI RDC project with OpenStack API access
+- SSH key pair registered in NeSI RDC
+- Sufficient compute and network quotas for cluster deployment
+
+### Required Tools
+- Ansible 2.15+ and ansible-core
+- Terraform 1.0+
+- Python 3.8+
+- OpenStack SDK (`pip install openstacksdk>=1.0.0`)
+
+### Environment Setup
+It is recommended to use a Python virtual environment to isolate dependencies:
+
+```bash
+# Create virtual environment
+python3 -m venv ~/nesi-capi
+
+# Activate
+source ~/nesi-capi/bin/activate
+
+# Install dependencies
+pip install ansible ansible-core openstacksdk
+```
+
+### Install Ansible Dependencies
+```bash
 ansible-galaxy role install -r requirements.yml -p ansible/roles
 ansible-galaxy collection install -r requirements.yml -p ansible/collections
 ```
 
-## If looking to create ansible managed security groups
+### OpenStack Credentials
+- Download `clouds.yaml` from NeSI RDC dashboard
+- Place at `~/.config/openstack/clouds.yaml`
+- Use Application Credentials rather than personal credentials for security
 
-It is recommended to use a python virtual environment to contain the required dependencies.
+### Pre-created Security Groups
+The deployment requires specific security groups that allow SSH (port 22) and Kubernetes API (port 6443) access from your Ansible host:
 
-``` { .sh }
-# create a virtual environment using the Python3 virtual environment module
-python3 -m venv ~/nesi-capi
+- `6443_Allow_ALL` - Open port 6443 inbound
+- `SSH Allow All` - Open port 22 inbound
+- `default` - Default OpenStack security group
 
-# activate the virtual environment
-source ~/nesi-capi/bin/activate
+## Quick Start
 
-# install ansible into the venv
-pip install ansible ansible-core
+For experienced users familiar with NeSI RDC:
 
-# install the openstacksdk
-pip install "openstacksdk>=1.0.0"
-```
+1. **Setup Credentials:**
+   ```bash
+   # Place clouds.yaml in ~/.config/openstack/clouds.yaml
+   # Ensure SSH key pair is available locally
+   ```
 
-## The breakdown
+2. **Configure Variables:**
+   ```bash
+   cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+   cp group_vars/servers/servers.yml.example group_vars/servers/servers.yml
+   # Edit both files with your NeSI RDC details
+   ```
 
-`terraform`
+3. **Deploy:**
+   ```bash
+   export TF_VAR_key_file="/path/to/your/key"
+   export TF_VAR_vm_user="ubuntu"  # or appropriate VM user
+   ./deployment.sh bootstrap
+   ```
 
-These are the terraform files used to provision the base kind compute instance to bootstrap the CAPI cluster
+The bootstrap process will:
+- Create temporary K3s infrastructure
+- Install and configure CAPI components
+- Provision your management cluster
+- Set up optional monitoring and backups
+- Clean up temporary resources
 
-Make a copy of `terraform.tfvars.example` and rename it to `terraform.tfvars` and fill in the requried parameters
+Monitor the output for any required interventions or errors.
 
-``` { .sh }
+## Detailed Setup
+
+### 1. Terraform Configuration
+Configure your infrastructure settings by creating the Terraform variables file:
+
+```bash
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 ```
 
-Inside the `terraform/terraform.tfvars` file is some user configuration required.
+**Required Variables:**
+- `tenant_name`: Your NeSI RDC project name
+- `key_pair`: Name of your SSH key pair in NeSI RDC
+- `key_file`: Local path to your SSH private key
+- `kind_flavor_id`: VM flavor ID for the Kind instance (e.g., `6b2e76a8-cce0-4175-8160-76e2525d3d3d` for balanced compute)
+- `kind_image_id`: Image ID for the Kind instance (e.g., `1a0480d1-55c8-4fd7-8c7a-8c26e52d8cbd` for Ubuntu 22.04)
+- `vm_user`: Username for VM SSH (Ubuntu: `ubuntu`)
+- `kind_security_groups`: List of security groups as shown above
 
-``` { .sh }
-tenant_name = "NeSI_RDC_PROJECT_NAME"
+### 2. Ansible Variables
+Configure cluster-specific settings by creating the Ansible variables file:
 
-key_pair    = "NeSI_RDC_KEYPAIR_NAME"
-key_file    = "NeSI_RDC_KEYFILE"
-
-kind_flavor_id   = "6b2e76a8-cce0-4175-8160-76e2525d3d3d" # balanced1.2cpu4ram
-kind_image_id    = "1a0480d1-55c8-4fd7-8c7a-8c26e52d8cbd" # Ubuntu 22.04
-vm_user     = "IMAGE_USER" # Ubuntu is `ubuntu` as an exxample
-
-kind_security_groups = ["6443_Allow_ALL", "SSH Allow All", "default"]
-```
-
-`NeSI_RDC_KEYPAIR_NAME` is your `Key Pair` name that is setup in NeSI RDC
-
-`NeSI_RDC_KEYFILE` is the local location for your ssh key
-
-`kind_security_groups` need to allow SSH from your ansible host so that the playbooks can run. Ensure you have the following ones created or are the same ports:
-
-- `6443_Allow_ALL` - Allow 6443 to all
-- `SSH Allow All` - Allow 22 to all
-
----
-
-`ansible`
-
-Make a copy of `group_vars/servers/servers.yml.example` and rename it to `servers.yml` and fill in the requried parameters
-
-``` { .sh }
+```bash
 cp group_vars/servers/servers.yml.example group_vars/servers/servers.yml
 ```
 
-Inside the `group_vars/servers/servers.yml` file is some user configuration required.
+**Required Variables:**
+- `kubernetes_version`: Target Kubernetes version (e.g., `v1.28.5`)
+- `capi_image_name`: Pre-built CAPI image name matching the Kubernetes version
+- `capi_provider_version`: Cluster API provider version (e.g., `v0.8.0`)
+- `cluster_name`: Unique name for your management cluster
+- `cluster_namespace`: Kubernetes namespace (default: `default`)
+- `cluster_network`: NeSI RDC project name
+- `openstack_ssh_key`: Name of your SSH key pair
+- `cluster_control_plane_count`: Number of control plane nodes (recommended: 1 or 3)
+- `control_plane_flavor`: VM flavor for control plane nodes
+- `cluster_worker_count`: Number of worker nodes
+- `worker_flavor`: VM flavor for worker nodes
+- `cluster_node_cidr`: IP range for cluster nodes
+- `cluster_pod_cidr`: IP range for Kubernetes pods
+- `bin_dir`: Directory for CAPI binaries (default: `/usr/local/bin`)
+- `clouds_yaml_local_location`: Path to your clouds.yaml file
 
-``` { .sh }
----
-kubernetes_version: v1.28.5
-capi_image_name: rocky-89-kube-v1.28.5
+### Supported Kubernetes Versions and Images
 
-capi_provider_version: v0.8.0
+**Available CAPI Images (Rocky 9 base):**
+- `rocky-9-containerd-v1.28.14`
+- `rocky-9-containerd-v1.29.7`
+- `rocky-9-containerd-v1.30.5`
+- `rocky-9-containerd-v1.31.1`
+- `rocky-9-containerd-v1.31.6`
+- `rocky-9-containerd-v1.32.2`
+- `rocky-9-containerd-v1.32.7`
+- `rocky-9-containerd-v1.33.3` (recommended for management clusters)
 
-cluster_name: CLUSTER_NAME
-cluster_namespace: default
+**Important Notes:**
+- Kubernetes version in `servers.yml` must match the CAPI image version
+- For management clusters, use Kubernetes 1.31+ when possible
+- Ensure your `capi_image_name` corresponds to the exact Kubernetes version
 
-cluster_network: NeSI_RDC_PROJECT_NAME
+## Deployment
 
-openstack_ssh_key: NeSI_RDC_KEYPAIR_NAME
+### Bootstrap Process
+The deployment is orchestrated by `./deployment.sh` with three operation modes:
 
-cluster_control_plane_count: 1
-control_plane_flavor: balanced1.2cpu4ram
-
-cluster_worker_count: 2
-worker_flavour: balanced1.2cpu4ram
-
-cluster_node_cidr: 10.30.0.0/24
-
-cluster_pod_cidr: 172.168.0.0/16
-
-bin_dir: /usr/local/bin
-
-clouds_yaml_local_location: ~/.config/openstack/clouds.yaml
-```
-
-`CLUSTER_NAME` the name for your management cluster
-
-`NeSI_RDC_PROJECT_NAME` the name of your NeSI RDC project space
-
-`NeSI_RDC_KEYPAIR_NAME` is your `Key Pair` name that is setup in NeSI RDC
-
-There are the following CAPI images available
-
-``` { .sh }
-Rocky 9
-
-rocky-9-containerd-v1.28.14
-rocky-9-containerd-v1.29.7
-rocky-9-containerd-v1.30.5
-rocky-9-containerd-v1.31.1
-rocky-9-containerd-v1.31.6
-rocky-9-containerd-v1.32.2
-rocky-9-containerd-v1.32.7
-rocky-9-containerd-v1.33.3
-
-```
-
-For management clusters we recommend Kuberenetes version 1.31+
-
-If changing the `capi_image_name` within `servers.yml` please also ensure the `kubernetes_version` matches the same.
-
-Example would be using the image `rocky-9-containerd-v1.33.3` would mean the `kubernetes_version` would be `v1.33.3`
-
----
-
-`clouds.yaml`
-
-You will need to ensure you have downloaded the `clouds.yaml` from the NeSI RDC dashboard and placed it in `~/.config/openstack/clouds.yaml`
-
-It is recommended that you use `Application Credentials` rather then your own credentials.
-
----
-
-`deployment.sh`
-
-To bootstrap the new CAPI cluster run the command ensuring you supply the following variables as envars
-
-`NeSI_RDC_KEYFILE_LOCATION` location to your local keyfile
-`VM_USERNAME` is the username for the kind image
-
-``` { .sh }
-export TF_VAR_key_file="NeSI_RDC_KEYFILE_LOCATION" export TF_VAR_vm_user="VM_USERNAME"
+**Bootstrap (Recommended):**
+```bash
+export TF_VAR_key_file="/path/to/your/key"
+export TF_VAR_vm_user="ubuntu"
 ./deployment.sh bootstrap
 ```
 
-This will run 3 playbooks.
+This performs:
+1. Infrastructure provisioning (`setup-infra.yml -e operation=create`)
+2. Bootstrap configuration (`ansible-kind.yml`)
+3. Infrastructure cleanup (`setup-infra.yml -e operation=destroy`)
 
-`ansible-playbook setup-infra.yml -e operation=create`
+**Manual Operations:**
+```bash
+# Create infrastructure only
+./deployment.sh create
 
-This first creates the kind compute instance inside the NeSI RDC
+# Destroy infrastructure only
+./deployment.sh destroy
+```
 
-`ansible-playbook -i host.ini ansible-kind.yml -u ubuntu --key-file '~/.ssh/id_flexi'`
+### What Happens During Bootstrap
 
-Runs the ansible play `ansible-kind.yml` that installs kind onto the compute instance, installs the required dependencies to get it setup as a CAPI cluster, Creates a new workload cluster and promotes that to the management cluster.
+1. **Infrastructure Creation**: Terraform provisions a temporary VM in NeSI RDC for Kind hosting
+2. **Dependency Installation**: The bootstrap VM gets k3s, clusterctl, and CAPI components
+3. **Cluster Provisioning**: A target cluster is created on OpenStack via CAPI
+4. **Management Promotion**: The new cluster becomes the management cluster
+5. **Resource Cleanup**: Temporary bootstrap infrastructure is destroyed
 
-You will need to update the values in `group_vars/servers/servers.yaml` with the main value being `clouds_yaml_local_location`
+### Running the Bootstrap Playbook Directly
+If you need more control:
+```bash
+# After infrastructure provisioning
+ansible-playbook -i host.ini ansible-kind.yml -u ${TF_VAR_vm_user} --key-file "${TF_VAR_key_file}"
+```
 
-`ansible-playbook setup-infra.yml -e operation=destroy`
+### Verification
+After successful deployment, verify cluster connectivity:
+```bash
+kubectl --kubeconfig=./path/to/kubeconfig get nodes
+```
 
-The final playbook to run is the terraform destroy, this will tear down the kind instance after the new CAPI Management cluster has been created.
+### Destroying the Cluster
+To tear down the entire cluster and infrastructure:
+```bash
+./deployment.sh destroy
+```
 
+## Extending Features
 
-## Enabling Velero backups
+This repository includes optional roles for enhanced functionality:
 
-Velero role [README.md](roles/velero/README.md)
+### Monitoring with kube-prometheus
+The `kube-prometheus` role sets up comprehensive monitoring:
+- Prometheus for metrics collection
+- Grafana for visualization
+- Alertmanager for notifications
+- Promtail and Loki for log aggregation
 
+See: [kube-prometheus Role README](roles/kube-prometheus/README.md)
 
-## Enabling logging and Metrics
+### Backup with Velero
+The `velero` role enables cluster backup and disaster recovery:
+- Automated backup schedules
+- Restore capabilities
+- Multi-cloud backup targets
 
-Monitoring role [README.md](roles/kube-prometheus/README.md)
+See: [Velero Role README](roles/velero/README.md)
 
+## Troubleshooting
+
+### Common Issues
+
+**Ansible Connection Failures:**
+- Verify SSH key permissions and path in `TF_VAR_key_file`
+- Ensure security groups allow SSH access from your IP
+- Confirm VM username in `TF_VAR_vm_user`
+
+**Terraform Provisioning Errors:**
+- Check NeSI RDC quotas for compute instances
+- Verify OpenStack credentials and permissions
+- Confirm flavor and image IDs are valid and available
+
+**CAPI Cluster Creation Failures:**
+- Ensure CAPI image matches the specified Kubernetes version
+- Verify network settings and security group configurations
+- Check node CIDR ranges for conflicts with existing networks
+
+**Port and Access Issues:**
+- Confirm ports 22 (SSH) and 6443 (Kubernetes API) are open
+- Verify security group rules allow access from your Ansible host
+
+### Logs and Debugging
+- Bootstrap playbook logs are output to console
+- Kubernetes cluster logs: `kubectl logs -n capi-system`
+
+### Getting Help
+- Review NeSI RDC documentation for infrastructure-specific issues
+- Check upstream CAPI documentation for cluster creation problems
+- Ensure you're using compatible component versions
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit pull requests for review
+4. Follow existing code structure and naming conventions
 
 ## Notes
 
-If running this outside of the NeSI RDC then you will need to adjust your values based on your cloud proivder. This also all based on the cloud provider running an `openstack` base
+This setup is specifically designed for NeSI RDC OpenStack environment. For other cloud providers, adjust variables and configuration accordingly while maintaining the CAPI-based provisioning approach.
