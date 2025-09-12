@@ -155,6 +155,52 @@ cp group_vars/servers/servers.yml.example group_vars/servers/servers.yml
 - `bin_dir`: Directory for CAPI binaries (default: `/usr/local/bin`)
 - `clouds_yaml_local_location`: Path to your clouds.yaml file
 
+### OIDC Authentication Configuration
+
+This deployment supports OpenID Connect (OIDC) authentication for Kubernetes API access. OIDC allows you to use an external identity provider (such as Dex, Keycloak, or NeSI's OOD IdP) for user authentication and authorization.
+
+#### Prerequisites
+- Deploy an OIDC provider (e.g., Dex, Keycloak, or NeSI OnDemand)
+- Configure the OIDC provider with appropriate client settings
+- Ensure network connectivity between your cluster and the OIDC provider
+
+#### Enabling OIDC Authentication
+
+Set the following variables in your `servers.yml` file:
+
+**Required Variables:**
+- `kube_oidc_auth`: Set to `true` to enable OIDC authentication (default: `false`)
+- `kube_oidc_hostname`: The hostname of your OIDC provider
+- `kube_oidc_url`: The full OIDC issuer URL (e.g., `https://iam.example.com/realms/public`)
+- `kube_oidc_client_id`: The client ID registered with your OIDC provider
+
+**Optional Variables:**
+- `kube_oidc_username_claim`: JWT claim to use as the username (default: `preferred_username`)
+- `kube_oidc_groups_claim`: JWT claim containing user groups (default: `groups`)
+- `kube_oidc_groups`: Group name(s) to bind to the CAPI cluster manager role (default: `/kubernetes/administrator`)
+
+#### Example Configuration
+
+```yaml
+# OIDC Authentication Settings
+kube_oidc_auth: true
+kube_oidc_hostname: iam.test.nesi.org.nz
+kube_oidc_url: https://{{ kube_oidc_hostname }}/realms/public
+kube_oidc_client_id: nesi-capi-mgmt
+kube_oidc_username_claim: email
+kube_oidc_groups_claim: groups
+kube_oidc_groups: "/kubernetes/administrator"
+```
+
+#### How It Works
+
+When OIDC is enabled:
+1. The deployment creates a ClusterRole with necessary permissions for CAPI operations
+2. A ClusterRoleBinding is created that binds the specified group(s) to the ClusterRole
+3. Users authenticated via OIDC who are members of the specified group(s) will have access to manage CAPI clusters
+
+**Note:** Ensure your OIDC provider is properly configured and accessible before enabling OIDC authentication.
+
 ### Supported Kubernetes Versions and Images
 
 **Available CAPI Images (Rocky 9 base):**
