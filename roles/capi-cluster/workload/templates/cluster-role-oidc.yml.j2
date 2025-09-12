@@ -66,3 +66,11 @@ rules:
   - apiGroups: ["authorization.k8s.io"]
     resources: ["subjectaccessreviews"]
     verbs: ["create"]
+
+  # Allow listing and reading pod logs
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+      - services
+    verbs: ["get", "list", "watch"]
