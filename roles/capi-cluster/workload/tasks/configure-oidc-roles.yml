@@ -1,0 +1,22 @@
+---
+- name: Create ClusterRole template
+  template:
+    src: "cluster-role-oidc.yml.j2"
+    dest: "/tmp/{{ cluster_name }}-cluster-role-oidc.yml"
+    mode: 0640
+  
+- name: Create ClusterRoleBinding template
+  template:
+    src: "cluster-role-binding-oidc.yml.j2"
+    dest: "/tmp/{{ cluster_name }}-cluster-role-binding-oidc.yml"
+    mode: 0640
+
+- name: Init {{ cluster_name }} ClusterRole yaml 
+  shell: >-
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f /tmp/{{ cluster_name }}-cluster-role-oidc.yml
+  become: true
+
+- name: Init {{ cluster_name }} ClusterRoleBinding yaml
+  shell: >-
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f /tmp/{{ cluster_name }}-cluster-role-binding-oidc.yml
+  become: true
