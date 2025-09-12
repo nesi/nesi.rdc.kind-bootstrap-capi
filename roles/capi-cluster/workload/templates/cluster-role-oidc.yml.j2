@@ -1,0 +1,68 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: capi-cluster-manager
+rules:
+  # Core CAPI API groups
+  - apiGroups:
+      - cluster.x-k8s.io
+    resources:
+      - clusters
+      - clusters/status
+      - machines
+      - machines/status
+      - machinedeployments
+      - machinedeployments/status
+      - machinepools
+      - machinepools/status
+      - kubeadmconfigs
+      - kubeadmconfigs/status
+      - kubeadmcontrolplanes
+      - kubeadmcontrolplanes/status
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Bootstrap
+  - apiGroups:
+      - bootstrap.cluster.x-k8s.io
+    resources: ["*"]
+    verbs: ["*"]
+
+  # Control plane
+  - apiGroups:
+      - controlplane.cluster.x-k8s.io
+    resources: ["*"]
+    verbs: ["*"]
+
+  # Infrastructure provider (example: OpenStack)
+  - apiGroups:
+      - infrastructure.cluster.x-k8s.io
+    resources: ["*"]
+    verbs: ["*"]
+
+  # Core resources needed to interact with clusters
+  - apiGroups: [""]
+    resources:
+      - secrets
+      - configmaps
+      - services
+      - events
+      - pods/log
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # RBAC so CAPI controllers can set up access
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - roles
+      - rolebindings
+      - clusterroles
+      - clusterrolebindings
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # For applying kubeconfig and talking to workload clusters
+  - apiGroups: ["authentication.k8s.io"]
+    resources: ["tokenreviews"]
+    verbs: ["create"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["subjectaccessreviews"]
+    verbs: ["create"]

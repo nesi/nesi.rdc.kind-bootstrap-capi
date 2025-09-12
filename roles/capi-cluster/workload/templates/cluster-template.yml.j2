@@ -73,6 +73,14 @@ metadata:
 spec:
   kubeadmConfigSpec:
     clusterConfiguration:
+{% if enable_oidc_auth %}
+      apiServer:
+        extraArgs:
+          oidc-issuer-url: "{{ kube_oidc_url }}"
+          oidc-client-id: "{{ kube_oidc_client_id }}"
+          oidc-username-claim: "{{ kube_oidc_username_claim }}"
+          oidc-groups-claim: "{{ kube_oidc_groups_claim }}"
+{% endif %}
       controllerManager:
         extraArgs:
           cloud-provider: external

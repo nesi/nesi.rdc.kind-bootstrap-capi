@@ -1,0 +1,11 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: capi-cluster-manager-binding
+subjects:
+  - kind: Group
+    name: "{{ kube_oidc_groups }}"
+roleRef:
+  kind: ClusterRole
+  name: capi-cluster-manager
+  apiGroup: rbac.authorization.k8s.io

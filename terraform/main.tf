@@ -44,6 +44,7 @@ locals {
   host_ini_all = templatefile("${path.module}/templates/all-hosts.tpl", {
     kind_floating_ip = openstack_networking_floatingip_v2.kind_floating_ip.address,
     vm_private_key_file = var.key_file
+    ansible_user = var.vm_user
   })
 }
 
@@ -52,6 +53,7 @@ locals {
   host_ini_content = templatefile("${path.module}/templates/host.ini.tpl", {
     kind_floating_ip = openstack_networking_floatingip_v2.kind_floating_ip.address,
     vm_private_key_file = var.key_file
+    ansible_user = var.vm_user
   })
 }
 
