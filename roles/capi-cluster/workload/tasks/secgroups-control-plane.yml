@@ -71,3 +71,15 @@
     state: present
   with_items: "{{ source_ips }}"
   ignore_errors: true
+
+- name: Talos API node rule
+  openstack.cloud.security_group_rule:
+    cloud: "{{ yaml_openstack_cloud }}"
+    security_group: "{{ controlplane_secgroup.security_group.id }}"
+    protocol: TCP
+    port_range_min: 50000
+    port_range_max: 50001
+    remote_ip_prefix: "{{ cluster_node_cidr }}"
+    description: Created by cluster-api-provider - Talos API nodes
+    state: present
+  ignore_errors: true

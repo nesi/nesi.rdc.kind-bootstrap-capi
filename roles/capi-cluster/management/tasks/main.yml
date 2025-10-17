@@ -1,12 +1,12 @@
 ---
-- name: Management | Check if {{ cluster_name }} is management cluster
+- name: Check if {{ cluster_name }} is management cluster
   shell: >-
     kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig get pods -A | grep -c capo-system
   register: capo_system_pods
   become: true
   ignore_errors: true
 
-- name: Management | Install Openstack Resource Controller (ORC) CRD's
+- name: Install Openstack Resource Controller (ORC) CRD's
   shell: >-
     kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply \
     -f https://github.com/k-orc/openstack-resource-controller/releases/download/{{ orc_version }}/install.yaml
@@ -14,42 +14,39 @@
   when:
     - capo_system_pods.stdout != "1"
 
-- name: Management | Install Openstack management for {{ cluster_name }}
+- name: Install Openstack management for {{ cluster_name }} (Plain)
   shell: >-
     clusterctl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig init --infrastructure {{ clusterctl_provider }}:{{ clusterctl_provider_version }}
   become: true
   when:
     - capo_system_pods.stdout != "1"
+    - capi_deployment != "talos"
 
-- name: Management | Wait 2 minutes for Openstack management to settle
+- name: Install Openstack management for {{ cluster_name }} (Talos)
+  shell: >-
+    clusterctl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig init -c talos -b talos --infrastructure {{ clusterctl_provider }}:{{ clusterctl_provider_version }}
+  become: true
+  when:
+    - capo_system_pods.stdout != "1"
+    - capi_deployment == "talos"
+
+- name: Wait 2 minutes for Openstack management to settle
   pause:
     seconds: 120
   when:
     - capo_system_pods.stdout != "1"
 
-- name: Management | Move Openstack management from bootstrap to {{ cluster_name }}
-  shell: >-
-    clusterctl move --to-kubeconfig /tmp/{{ cluster_name }}.kubeconfig -v 10
-  become: true
-  when:
-    - capo_system_pods.stdout != "1"
-
-- name: Management | Display {{ cluster_name }}.kubeconfig contents
-  command: cat /tmp/{{ cluster_name }}.kubeconfig
-  register: kubeconfig_output
-  when:
-    - capo_system_pods.stdout != "1"
-
-# - name: Management | Print {{ cluster_name }}.kubeconfig to console
-#   debug:
-#     msg: "{{kubeconfig_output.stdout_lines}}"
+# - name: Move Openstack management from bootstrap to {{ cluster_name }}
+#   shell: >-
+#     clusterctl move --to-kubeconfig /tmp/{{ cluster_name }}.kubeconfig -v 10
+#   become: true
 #   when:
 #     - capo_system_pods.stdout != "1"
 
-- name: Management | Write {{ cluster_name }}.kubeconfig to localhost
+- name: Write config-{{ cluster_name }} to localhost
   delegate_to: localhost
   ansible.builtin.copy:
     content: "{{kubeconfig_output.stdout}}"
-    dest: "{{ cluster_name }}.kubeconfig"
+    dest: "confg-{{ cluster_name }}"
   when:
     - capo_system_pods.stdout != "1"

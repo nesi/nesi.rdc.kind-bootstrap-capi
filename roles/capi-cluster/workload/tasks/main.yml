@@ -1,28 +1,28 @@
 ---
-- name: Workload | Ensure clouds.yaml file exists locally
+- name: Ensure clouds.yaml file exists locally
   delegate_to: localhost
   stat:
     path: "{{ clouds_yaml_local_location }}"
   register: clouds_yaml_local_file
 
-- name: Workload | Copy local clouds.yaml to remote
+- name: Copy local clouds.yaml to remote
   copy:
     src: "{{ clouds_yaml_local_location }}"
     dest: "{{ clouds_yaml_location }}"
     mode: 0640  
 
-- name: Workload | Ensure clouds.yaml file exists remotely
+- name: Ensure clouds.yaml file exists remotely
   stat:
     path: "{{ clouds_yaml_location }}"
   register: clouds_yaml_file
   when: clouds_yaml_local_file.stat.exists
 
-- name: Workload | Ensure yq is installed in {{ bin_dir }}
+- name: Ensure yq is installed in {{ bin_dir }}
   stat:
     path: "{{ bin_dir }}/yq"
   register: yq_binary
 
-- name: Workload | Download yq to specified location {{ bin_dir }}
+- name: Download yq to specified location {{ bin_dir }}
   get_url:
     url: "{{ yq_repo }}"
     dest: "{{ bin_dir }}/yq"
@@ -32,7 +32,7 @@
   when:
     - not yq_binary.stat.exists
 
-- name: Workload | Create and initialize clusterctl and cloud manager
+- name: Create and initialize clusterctl and cloud manager
   block:
 
     - name: Deployed ansible managed CAPI security groups
@@ -42,7 +42,7 @@
           openstack.cloud.security_group:
             cloud: "{{ yaml_openstack_cloud }}"
             state: present
-            name: k8s-cluster-default-{{ cluster_name }}-secgroup-controlplane
+            name: k8s-cluster-{{ cluster_namespace }}-{{ cluster_name }}-secgroup-controlplane
             description: Ansible Cluster API managed group
           register: controlplane_secgroup
 
@@ -50,7 +50,7 @@
           openstack.cloud.security_group:
             cloud: "{{ yaml_openstack_cloud }}"
             state: present
-            name: k8s-cluster-default-{{ cluster_name }}-secgroup-worker
+            name: k8s-cluster-{{ cluster_namespace }}-{{ cluster_name }}-secgroup-worker
             description: Ansible Cluster API managed group
           register: worker_secgroup
 
@@ -62,19 +62,24 @@
       when:
         - "capi_managed_secgroups|default(true)|bool == false"
         
-    - name: Workload | Read clouds.yaml
+    - name: Read clouds.yaml
       slurp:
         src: "{{ clouds_yaml_location }}"
       register: file_content
 
-    - name: Workload | Decode the base64 encoded version of the YAML file and assign it to a variable
+    - name: Decode the base64 encoded version of the YAML file and assign it to a variable
       set_fact:
         file_contents: "{{ file_content['content'] | b64decode | from_yaml }}"
 
-    - name: Workload | Create and initialize clusterctl
+    - name: Create and initialize clusterctl
       include_tasks: configure-install-clusterctl.yml
 
-    - name: Workload | Create and initialize cloud manager
+    - name: Deploy and initialize CNI (Plain)
+      include_tasks: install-cni.yaml
+      when:
+        - capi_deployment != "talos"
+
+    - name: Create and initialize cloud manager
       include_tasks: install-cloud-manager.yml
   when:
     - clouds_yaml_file.stat.exists

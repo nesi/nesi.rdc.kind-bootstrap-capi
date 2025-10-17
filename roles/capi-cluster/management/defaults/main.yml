@@ -5,3 +5,6 @@ clusterctl_provider: openstack
 clusterctl_provider_version: v0.12.4
 
 orc_version: v2.2.0
+
+# variables are talos, plain
+capi_deployment: talos

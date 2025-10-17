@@ -15,7 +15,7 @@ control_plane_flavor: balanced1.2cpu4ram
 cluster_worker_count: 2
 worker_flavour: balanced1.2cpu4ram
 
-cluster_node_cidr: 10.10.0.0/24
+cluster_node_cidr: 10.1.0.0/24
 
 cluster_pod_cidr: 192.168.0.0/16
 
@@ -39,3 +39,12 @@ cloud_provider_openstack_version: 1.33
 
 source_ips:
   - 163.7.144.0/21
+  - "{{ cluster_node_cidr }}"
+
+calico_version: v3.30.3
+
+# variables are talos, plain
+capi_deployment: talos
+
+talos_version: 1.11.2
+talos_openstack_image: talos-v{{ talos_version }}

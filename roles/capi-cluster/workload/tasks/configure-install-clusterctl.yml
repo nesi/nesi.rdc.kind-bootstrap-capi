@@ -1,9 +1,11 @@
 ---
-- name: Create clusterctl template
+- name: Create clusterctl template (plain)
   template:
     src: "cluster-template.yml.j2"
     dest: "/tmp/cluster-template.yml"
     mode: 0640
+  when:
+    - capi_deployment != "talos"
 
 - name: Copy create_base64_ca_cert.sh
   copy:
@@ -31,17 +33,43 @@
   become: true
   register: base64_cloud_yaml
 
-- name: Create clusterctl config
+- name: Create clusterctl template (talos)
+  template:
+    src: "talos-cluster-template.yml.j2"
+    dest: "/tmp/cluster-template.yml"
+    mode: 0640
+  when:
+    - capi_deployment == "talos"
+
+- name: Create clusterctl config (plain)
   template:
     src: "openstack-cluster-config.yml.j2"
     dest: "/tmp/{{ cluster_name }}-openstack-cluster-config.yml"
     mode: 0640
+  when:
+    - capi_deployment != "talos"
 
-- name: Generate clusterctl yaml for {{ cluster_name }}
+- name: Generate clusterctl yaml for {{ cluster_name }} (Plain)
   shell: >-
-    clusterctl generate cluster {{ cluster_name }} \
+    clusterctl generate cluster {{ cluster_name }} -n {{ cluster_namespace }} \
     --config /tmp/{{ cluster_name }}-openstack-cluster-config.yml \
     --from /tmp/cluster-template.yml > /tmp/{{ cluster_name }}.yml
+  become: true
+  when:
+    - capi_deployment != "talos"
+
+- name: Generate clusterctl yaml for {{ cluster_name }} (Talos)
+  shell: >-
+    clusterctl generate cluster {{ cluster_name }} -n {{ cluster_namespace }} \
+    --from /tmp/cluster-template.yml > /tmp/{{ cluster_name }}.yml
+  become: true
+  when:
+    - capi_deployment == "talos"
+
+- name: Ensure namespace {{ cluster_namespace }} exists
+  shell: |
+    kubectl get namespace "{{ cluster_namespace }}" >/dev/null 2>&1 || \
+    kubectl create namespace "{{ cluster_namespace }}"
   become: true
 
 - name: Wait for k3s cluster to settle
@@ -53,14 +81,27 @@
     kubectl apply -f /tmp/{{ cluster_name }}.yml
   become: true
 
-- name: Wait for {{ cluster_name }} control plane to return true
+- name: Wait for {{ cluster_name }} control plane to return true (Plain)
   shell: >-
-    kubectl get kubeadmcontrolplane | grep {{ cluster_name }} | grep -c true
+    kubectl get kubeadmcontrolplane -A | grep {{ cluster_name }} | grep -c true
   register: result
   until: result.stdout == "1"
   retries: 15
   delay: 30
   become: true
+  when:
+    - capi_deployment != "talos"
+
+- name: Wait for {{ cluster_name }} control plane to return true (Talos)
+  shell: >-
+    kubectl get taloscontrolplane -A | grep {{ cluster_name }} | grep -c true
+  register: result
+  until: result.stdout == "1"
+  retries: 15
+  delay: 30
+  become: true
+  when:
+    - capi_deployment == "talos"
 
 - name: Pause for {{ cluster_settle_timeout_base * cluster_control_plane_count }} minutes while cluster settles
   ansible.builtin.pause:
@@ -71,17 +112,3 @@
     kubectl get secret -n {{ cluster_namespace }} {{ cluster_name }}-kubeconfig 
     -o jsonpath='{.data.value}'|base64 -d > /tmp/{{ cluster_name }}.kubeconfig
   become: true
-
-- name: Check for {{ cluster_name }} calico-kube nodes
-  shell: >-
-    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig get pods -A | grep -c calico-kube
-  register: calico_kube_pods
-  become: true
-  ignore_errors: true
-
-- name: Install CNI for {{ cluster_name }}
-  shell: >-
-    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
-  become: true
-  when:
-    - calico_kube_pods.stdout != "1"

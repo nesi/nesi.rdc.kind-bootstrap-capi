@@ -1,0 +1,43 @@
+---
+k8s_bootstrap_version: 1.33
+
+kubernetes_version: v1.33.3
+capi_image_name: rocky-9-containerd-v1.33.3
+
+clusterctl_version: v1.10.4
+clusterctl_provider_version: v0.12.4
+
+cluster_name: nesi-capi-mgmt-test
+cluster_namespace: default
+
+cluster_network: nesi-capi-test
+
+network_id: 05669c0e-d973-41f2-bff4-d8568bb2a711
+router_id: dfbd2804-6908-41b1-b05e-aeae26585c9a
+
+openstack_ssh_key: nesi-capi-test
+
+cluster_control_plane_count: 1
+control_plane_flavor: balanced1.2cpu4ram
+
+cluster_worker_count: 2
+worker_flavour: balanced1.2cpu4ram
+
+cluster_node_cidr: 10.1.0.0/24
+
+cluster_pod_cidr: 172.16.0.0/16
+
+bin_dir: /usr/local/bin
+
+clouds_yaml_local_location: ~/.config/openstack/clouds-nesi-capi-test.yaml
+
+capi_managed_secgroups: false
+
+yaml_openstack_cloud: openstack
+
+cloud_provider_openstack_version: 1.33
+
+source_ips:
+  - 163.7.144.0/21
+  - "{{ cluster_node_cidr }}"
+  - 203.211.76.187/32
