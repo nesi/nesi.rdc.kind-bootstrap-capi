@@ -86,7 +86,7 @@
     - name: Create and initialize cloud manager
       include_tasks: install-cloud-manager.yml
 
-    - name: Workload | Create and initialize OIDC roles
+    - name: Create and initialize OIDC roles
       include_tasks: configure-oidc-roles.yml
       when: enable_oidc_auth | default(false) | bool  
   when:

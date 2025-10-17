@@ -146,6 +146,15 @@ spec:
                 kind: ClusterRole
                 name: system:certificates.k8s.io:certificatesigningrequests:nodeclient
                 apiGroup: rbac.authorization.k8s.io
+{% if enable_oidc_auth %}
+      - op: add
+        path: /cluster/apiServer/extraArgs
+        value:
+          oidc-issuer-url: "{{ kube_oidc_url }}"
+          oidc-client-id: "{{ kube_oidc_client_id }}"
+          oidc-username-claim: "{{ kube_oidc_username_claim }}"
+          oidc-groups-claim: "{{ kube_oidc_groups_claim }}"
+{% endif %}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster

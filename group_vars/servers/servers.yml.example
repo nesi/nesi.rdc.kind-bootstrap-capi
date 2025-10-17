@@ -73,3 +73,9 @@ kube_oidc_client_id: kubernetes
 ## Optional settings for OIDC
 kube_oidc_username_claim: preferred_username
 kube_oidc_groups_claim: groups
+
+# variables are talos, plain
+capi_deployment: plain
+
+talos_version: 1.11.2
+talos_openstack_image: talos-v{{ talos_version }}
