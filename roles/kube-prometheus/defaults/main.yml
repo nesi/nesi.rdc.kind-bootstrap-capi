@@ -1,0 +1,29 @@
+---
+cluster_name: "some-cluster-here"
+
+enable_monitoring: false
+
+tmp_dir: "/tmp/{{ cluster_name }}"
+kube_prometheus_version: release-0.14
+
+kube_config_path: /tmp/{{ cluster_name }}.kubeconfig
+
+monitoring_username: someuser
+monitoring_password: supersecretpassword
+
+mimir_protocol: http
+mimir_domain: "someEndPointSomewhere"
+mimir_path: /api/v1/push
+mimir_endpoint_full: '{{ mimir_protocol }}://{{ mimir_domain }}{{ mimir_path }}'
+
+mimir_username: "{{ monitoring_username }}"
+mimir_password: "{{ monitoring_password }}"
+
+
+loki_protocol: http
+loki_domain: "someEndPointSomewhere"
+loki_path: /loki/api/v1/push
+loki_endpoint_full: '{{ loki_protocol }}://{{ loki_domain }}{{ loki_path }}'
+
+loki_username: "{{ monitoring_username }}"
+loki_password: "{{ monitoring_password }}"

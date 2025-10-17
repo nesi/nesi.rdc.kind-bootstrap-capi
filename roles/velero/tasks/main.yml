@@ -1,0 +1,43 @@
+---
+- name: Skip backup configuration (debug message)
+  ansible.builtin.debug:
+    msg: "Backup is disabled. Set enable_backup=true to configure backup components."
+  when: not enable_backup | default(false) | bool
+
+- block:
+    - name: Check if velero is installed
+      ansible.builtin.shell: >
+        velero version --client-only
+      register: velero_cmd
+      ignore_errors: true
+      changed_when: false
+
+    - name: Debug velero CLI presence
+      ansible.builtin.debug:
+        msg: "Velero CLI is already installed (version: {{ velero_cmd.stdout | regex_search('Version: ([^ ]+)', '\\1') if velero_cmd.rc == 0 else 'N/A' }})"
+      when: velero_cmd.rc == 0
+
+    - name: Install velero if not present
+      include_tasks: install-velero-cli.yml
+      when: velero_cmd.rc != 0
+
+    - name: Check if Velero pods are already deployed
+      ansible.builtin.shell: >
+        kubectl --kubeconfig {{ kubeconfig_path }} get pods -n velero --no-headers 2>/dev/null | wc -l
+      register: velero_pods_count
+      changed_when: false
+      failed_when: false
+
+    - name: Debug velero pod deployment
+      ansible.builtin.debug:
+        msg: "Velero pods already deployed ({{ velero_pods_count.stdout }} pods)."
+      when: velero_pods_count.stdout | int > 0
+
+    - name: Initialize velero
+      include_tasks: initialize-velero.yml
+      when: velero_pods_count.stdout | int == 0
+
+    - name: Setup velero backup schedule
+      include_tasks: setup-velero-backup.yml
+
+  when: enable_backup | default(false) | bool

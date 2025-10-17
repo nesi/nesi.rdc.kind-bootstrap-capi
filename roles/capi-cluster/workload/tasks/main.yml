@@ -71,6 +71,10 @@
       set_fact:
         file_contents: "{{ file_content['content'] | b64decode | from_yaml }}"
 
+    - name: Setting OIDC auth boolean to {{ kube_oidc_auth }}
+      set_fact:
+        enable_oidc_auth: "{{ kube_oidc_auth }}"
+
     - name: Create and initialize clusterctl
       include_tasks: configure-install-clusterctl.yml
 
@@ -81,6 +85,10 @@
 
     - name: Create and initialize cloud manager
       include_tasks: install-cloud-manager.yml
+
+    - name: Workload | Create and initialize OIDC roles
+      include_tasks: configure-oidc-roles.yml
+      when: enable_oidc_auth | default(false) | bool  
   when:
     - clouds_yaml_file.stat.exists
     - clouds_yaml_local_file.stat.exists

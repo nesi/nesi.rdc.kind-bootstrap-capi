@@ -31,7 +31,7 @@ bin_dir: /usr/local/bin
 
 clouds_yaml_local_location: ~/.config/openstack/clouds.yaml
 
-capi_managed_secgroups: true
+capi_managed_secgroups: false
 
 yaml_openstack_cloud: openstack
 
@@ -40,3 +40,36 @@ cloud_provider_openstack_version: 1.33
 source_ips:
   - 163.7.144.0/21
   - "{{ cluster_node_cidr }}"
+
+
+## Backup Settings
+
+enable_backup: false
+
+velero_version: v1.16.2
+
+velero_bucket_name: "OPENSTACK_BUCKET_NAME"
+
+
+## Monitroing settings
+
+enable_monitoring: false
+
+mimir_domain: "MIMIR_DOMAIN"
+loki_domain: "LOKI_DOMAIN"
+
+monitoring_username: someuser
+monitoring_password: supersecretpassword
+
+kube_prometheus_version: release-0.14
+
+## Variables for OpenID Connect Configuration https://kubernetes.io/docs/admin/authentication/
+## To use OpenID you have to deploy additional an OpenID Provider (e.g Dex, Keycloak, ...)
+
+kube_oidc_auth: false
+kube_oidc_hostname: ood-idp.training.data.nesi.org.nz
+kube_oidc_url: https://{{ kube_oidc_hostname }}/realms/admin
+kube_oidc_client_id: kubernetes
+## Optional settings for OIDC
+kube_oidc_username_claim: preferred_username
+kube_oidc_groups_claim: groups

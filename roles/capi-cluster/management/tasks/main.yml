@@ -36,14 +36,7 @@
   when:
     - capo_system_pods.stdout != "1"
 
-# - name: Move Openstack management from bootstrap to {{ cluster_name }}
-#   shell: >-
-#     clusterctl move --to-kubeconfig /tmp/{{ cluster_name }}.kubeconfig -v 10
-#   become: true
-#   when:
-#     - capo_system_pods.stdout != "1"
-
-- name: Write config-{{ cluster_name }} to localhost
+- name: Management | Write {{ cluster_name }}.kubeconfig to localhost
   delegate_to: localhost
   ansible.builtin.copy:
     content: "{{kubeconfig_output.stdout}}"
