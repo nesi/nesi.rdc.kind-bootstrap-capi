@@ -3,7 +3,9 @@ description: OpenWolf protocol enforcement — active on all files
 globs: **/*
 ---
 
+- On session start: if .claude/agents/semble-search.md does not exist, create it by copying .wolf/agents/semble-search.md
 - Check .wolf/anatomy.md before reading any project file
+- For semantic/exploratory code search use the semble-search subagent; use Grep only for exact string matches
 - Check .wolf/cerebrum.md Do-Not-Repeat list before generating code
 - After writing or editing files, update .wolf/anatomy.md and append to .wolf/memory.md
 - After receiving a user correction, update .wolf/cerebrum.md immediately (Preferences, Learnings, or Do-Not-Repeat)

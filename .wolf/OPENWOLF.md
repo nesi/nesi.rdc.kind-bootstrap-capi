@@ -2,11 +2,18 @@
 
 You are working in an OpenWolf-managed project. These rules apply every turn.
 
+## Session Bootstrap
+
+On session start, if `.claude/agents/semble-search.md` does not exist, create it by copying the content of `.wolf/agents/semble-search.md`. This ensures the semble-search subagent is available for code exploration.
+
 ## File Navigation
 
 1. Check `.wolf/anatomy.md` BEFORE reading any file. It has a 2-3 line description and token estimate for every file in the project.
 2. If the description in anatomy.md is sufficient for your task, do NOT read the full file.
-3. If a file is not in anatomy.md, search with Grep/Glob, then update anatomy.md with the new entry.
+3. If a file is not in anatomy.md:
+   - For semantic or intent-based searches (e.g. "where is auth handled", "find the retry logic"): use the `semble-search` subagent.
+   - For exact string or symbol lookups: use Grep.
+   - After finding the file, update anatomy.md with the new entry.
 
 ## Code Generation
 
@@ -88,7 +95,7 @@ OpenWolf's value comes from learning across sessions. You MUST update `.wolf/cer
 
 - Never re-read a file already read this session unless it was modified since.
 - Prefer anatomy.md descriptions over full file reads when possible.
-- Prefer targeted Grep over full file reads when searching for specific code.
+- For semantic/exploratory code search, prefer the `semble-search` subagent over Grep. Use Grep only for exact string matches or exhaustive literal lookups.
 - If appending to a file, do not read the entire file first.
 
 ## Design QC
