@@ -1,0 +1,10 @@
+---
+flux_fleet_repo_url: "https://gitlab.com/nesi1/rebase/reannz-capi-fleet"
+flux_fleet_branch: "main"
+flux_fleet_path: "clusters/management"
+
+# Set in servers.yml — never commit actual values
+flux_gitlab_token: ""
+flux_age_key_path: ""
+
+flux_operator_namespace: flux-system

@@ -1,0 +1,113 @@
+---
+- name: Flux | Install helm if not present
+  block:
+    - name: Flux | Check helm binary
+      stat:
+        path: "{{ bin_dir }}/helm"
+      register: helm_bin
+
+    - name: Flux | Download and install helm
+      shell: >-
+        curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        | HELM_INSTALL_DIR={{ bin_dir }} bash
+      become: true
+      when: not helm_bin.stat.exists
+
+- name: Flux | Install Flux Operator via Helm
+  shell: >-
+    helm upgrade --install flux-operator
+    oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
+    --namespace {{ flux_operator_namespace }}
+    --create-namespace
+    --kubeconfig /tmp/{{ cluster_name }}.kubeconfig
+    --wait
+  become: true
+
+- name: Flux | Create flux-gitlab-token secret (idempotent)
+  shell: >-
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig
+    create secret generic flux-gitlab-token
+    --namespace {{ flux_operator_namespace }}
+    --from-literal=username=git
+    --from-literal=password={{ flux_gitlab_token }}
+    --dry-run=client -o yaml
+    | kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f -
+  become: true
+  no_log: true
+
+- name: Flux | Copy age key to remote
+  copy:
+    src: "{{ flux_age_key_path }}"
+    dest: /tmp/flux-age.agekey
+    mode: 0600
+  no_log: true
+
+- name: Flux | Create sops-age secret (idempotent)
+  shell: >-
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig
+    create secret generic sops-age
+    --namespace {{ flux_operator_namespace }}
+    --from-file=age.agekey=/tmp/flux-age.agekey
+    --dry-run=client -o yaml
+    | kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f -
+  become: true
+  no_log: true
+
+- name: Flux | Remove age key from remote
+  file:
+    path: /tmp/flux-age.agekey
+    state: absent
+
+- name: Flux | Create openstack-tf-credentials secret (idempotent)
+  shell: >-
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig
+    create secret generic openstack-tf-credentials
+    --namespace {{ flux_operator_namespace }}
+    --from-literal=OS_AUTH_URL={{ openstack_auth_url }}
+    --from-literal=OS_APPLICATION_CREDENTIAL_ID={{ openstack_app_credential_id }}
+    --from-literal=OS_APPLICATION_CREDENTIAL_SECRET={{ openstack_app_credential_secret }}
+    --from-literal=OS_REGION_NAME={{ openstack_region | default('akl-1') }}
+    --dry-run=client -o yaml
+    | kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig apply -f -
+  become: true
+  no_log: true
+
+- name: Flux | Render and apply FluxInstance
+  template:
+    src: flux-instance.yaml.j2
+    dest: /tmp/flux-instance.yaml
+    mode: 0640
+
+- name: Flux | Apply FluxInstance
+  shell: >-
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig
+    apply -f /tmp/flux-instance.yaml
+  become: true
+  when: not dr_mode | default(false)
+
+- name: Flux | DR mode — skip FluxInstance
+  debug:
+    msg: "DR mode active. Apply /tmp/flux-instance.yaml manually after Velero restore."
+  when: dr_mode | default(false)
+
+- name: Flux | Wait for FluxInstance to become Ready
+  shell: >-
+    kubectl --kubeconfig /tmp/{{ cluster_name }}.kubeconfig
+    get fluxinstance flux -n {{ flux_operator_namespace }}
+    -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+  register: flux_ready
+  until: flux_ready.stdout == "True"
+  retries: 20
+  delay: 15
+  become: true
+  when: not dr_mode | default(false)
+
+- name: Flux | Install tf-controller via Helm
+  shell: >-
+    helm upgrade --install tofu-controller
+    oci://ghcr.io/flux-iac/charts/tofu-controller
+    --namespace {{ flux_operator_namespace }}
+    --kubeconfig /tmp/{{ cluster_name }}.kubeconfig
+    --wait
+  become: true
+  when: not dr_mode | default(false)

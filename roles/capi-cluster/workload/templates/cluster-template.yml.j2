@@ -166,7 +166,7 @@ spec:
           name: default
 {% if capi_managed_secgroups == false %}
       - filter:
-          name: k8s-cluster-default-{{ cluster_name }}-secgroup-controlplane
+          name: k8s-cluster-default-{{ cluster_name }}-secgroup-worker
 {% endif %}
       ports:
       - network:

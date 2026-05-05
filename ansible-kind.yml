@@ -25,6 +25,9 @@
     - role: capi-cluster/management
       tags: [setup]
 
+    - role: flux-operator
+      tags: [setup, flux]
+
     - role: kube-prometheus
       tags: [setup, monitoring]
 

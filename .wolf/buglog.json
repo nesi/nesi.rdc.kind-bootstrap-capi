@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "bugs": [
+    {
+      "id": "bug-001",
+      "timestamp": "2026-05-04T22:40:54.998Z",
+      "error_message": "Significant refactor of ",
+      "file": "flux-gitops-plan.md",
+      "root_cause": "10 lines replaced/restructured",
+      "fix": "Rewrote 16→68 lines (10 removed) | Also: │   ├── management/                    # Flux conf; │   │   ├── flux-system/               # Generated | Also: 1. **Add Flux bootstrap task** — new Ansible task ; 2. **Add SOPS age private key task** — push the ag | Also: **Phase 2 — Install Flux on mgmt cluster**; - Run `flux bootstrap github` against mgmt cluster | Also: | `flux` CLI | Bootstrap, monitor, debug | No — ad; | GitHub PAT | Flux repo access | Needs creating | | Also: 2. **Create `nesi-capi-fleet` GitHub repo** with b; 3. **Export existing cluster manifests** from mgmt",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 6,
+      "last_seen": "2026-05-04T22:41:50.550Z"
+    }
+  ]
+}

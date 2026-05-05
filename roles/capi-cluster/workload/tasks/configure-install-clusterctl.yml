@@ -41,14 +41,21 @@
   shell: >-
     clusterctl generate cluster {{ cluster_name }} \
     --config /tmp/{{ cluster_name }}-openstack-cluster-config.yml \
+    --target-namespace {{ cluster_namespace }} \
     --from /tmp/cluster-template.yml > /tmp/{{ cluster_name }}.yml
+  become: true
+
+- name: Ensure cluster namespace exists
+  shell: >-
+    kubectl create namespace {{ cluster_namespace }} --dry-run=client -o yaml
+    | kubectl apply -f -
   become: true
 
 - name: Wait for k3s cluster to settle
   pause:
     seconds: 30
 
-- name: Init {{ cluster_name }} clusterctl yaml 
+- name: Init {{ cluster_name }} clusterctl yaml
   shell: >-
     kubectl apply -f /tmp/{{ cluster_name }}.yml
   become: true
@@ -58,7 +65,7 @@
     kubectl get kubeadmcontrolplane | grep {{ cluster_name }} | grep -c true
   register: result
   until: result.stdout == "1"
-  retries: 15
+  retries: 60
   delay: 30
   become: true
 

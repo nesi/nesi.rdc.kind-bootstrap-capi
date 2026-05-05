@@ -1,35 +1,36 @@
 ---
-k8s_bootstrap_version: 1.33
+k8s_bootstrap_version: 1.35
 
-kubernetes_version: v1.33.3
-capi_image_name: rocky-9-containerd-v1.33.3
+kubernetes_version: v1.35.3
+capi_image_name: ubuntu-24-containerd-v1.35.3
+k3s_version: v1.35.0+k3s1
 
 clusterctl_version: v1.10.4
 clusterctl_provider_version: v0.12.4
 
-cluster_name: CLUSTER_NAME
-cluster_namespace: default
+cluster_name: test-gitops-management
+cluster_namespace: NeSI-Training-Prod
 
-cluster_network: NeSI_RDC_PROJECT_NAME
+cluster_network: NeSI-Training-Prod
 
-network_id: 05669c0e-d973-41f2-bff4-d8568bb2a711
-router_id: dfbd2804-6908-41b1-b05e-aeae26585c9a
+network_id: 7d9fba27-2cff-4472-9cd6-cc1156797ecc
+router_id: 7d535ca3-a801-4bcc-82c2-44e68709744e
 
-openstack_ssh_key: NeSI_RDC_KEYPAIR_NAME
+openstack_ssh_key: kahu-key
 
-cluster_control_plane_count: 1
+cluster_control_plane_count: 3
 control_plane_flavor: balanced1.2cpu4ram
 
 cluster_worker_count: 2
-worker_flavour: balanced1.2cpu4ram
+worker_flavour: balanced1.4cpu8ram
 
-cluster_node_cidr: 10.30.0.0/24
+cluster_node_cidr: 10.1.0.0/24
 
 cluster_pod_cidr: 172.16.0.0/16
 
 bin_dir: /usr/local/bin
 
-clouds_yaml_local_location: ~/.config/openstack/clouds.yaml
+clouds_yaml_local_location: ~/.config/openstack/clouds-nesi-training-prod.yaml
 
 capi_managed_secgroups: false
 
@@ -40,6 +41,17 @@ cloud_provider_openstack_version: 1.33
 source_ips:
   - 163.7.144.0/21
   - "{{ cluster_node_cidr }}"
+  - 203.211.105.199/32
+
+
+## Flux GitOps settings
+flux_gitlab_token: ""           # REQUIRED before running flux-operator role — GitLab PAT with read_repository scope
+flux_age_key_path: "~/.config/sops/age.agekey)"           # REQUIRED — local path to age.agekey (e.g. ~/.config/sops/age.agekey)
+openstack_auth_url: ""          # OpenStack keystone URL (from clouds.yaml)
+# openstack_app_credential_id: "" # Application credential ID
+# openstack_app_credential_secret: ""  # Application credential secret
+flux_fleet_repo_url: "https://gitlab.com/nesi1/nesi-capi-fleet"
+flux_fleet_branch: "main"
 
 
 ## Backup Settings
@@ -48,28 +60,28 @@ enable_backup: false
 
 velero_version: v1.16.2
 
-velero_bucket_name: "OPENSTACK_BUCKET_NAME"
+velero_bucket_name: "rdc-capi-mgmt-velero-prod"
 
 
-## Monitroing settings
+## Monitoring settings
 
 enable_monitoring: false
 
-mimir_domain: "MIMIR_DOMAIN"
-loki_domain: "LOKI_DOMAIN"
+mimir_domain: "mimir.observability.flexi.nesi.org.nz"
+loki_domain: "loki.observability.flexi.nesi.org.nz"
 
-monitoring_username: someuser
-monitoring_password: supersecretpassword
+monitoring_username: rdc-capi-mgmt
+monitoring_password: naRPSYNIqueR
 
 kube_prometheus_version: release-0.14
 
 ## Variables for OpenID Connect Configuration https://kubernetes.io/docs/admin/authentication/
 ## To use OpenID you have to deploy additional an OpenID Provider (e.g Dex, Keycloak, ...)
 
-kube_oidc_auth: false
-kube_oidc_hostname: ood-idp.training.data.nesi.org.nz
+kube_oidc_auth: true
+kube_oidc_hostname: iam.nesi.org.nz
 kube_oidc_url: https://{{ kube_oidc_hostname }}/realms/admin
-kube_oidc_client_id: kubernetes
+kube_oidc_client_id: nesi-capi-mgmt
 ## Optional settings for OIDC
-kube_oidc_username_claim: preferred_username
+kube_oidc_username_claim: email
 kube_oidc_groups_claim: groups
