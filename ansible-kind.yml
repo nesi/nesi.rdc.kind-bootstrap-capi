@@ -27,9 +27,3 @@
 
     - role: flux-operator
       tags: [setup, flux]
-
-    - role: kube-prometheus
-      tags: [setup, monitoring]
-
-    - role: velero
-      tags: [setup, backup]
